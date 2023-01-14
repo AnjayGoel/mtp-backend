@@ -2,3 +2,6 @@ django
 djangorestframework
 django-environ
 psycopg2
+django-cors-headers
+google-auth
+requests
