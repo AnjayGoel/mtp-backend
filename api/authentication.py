@@ -19,7 +19,7 @@ class GoogleJWTAuthentication(authentication.BaseAuthentication):
             info = id_token.verify_oauth2_token(token, requests.Request(), env('CLIENT_ID'))
 
             email = info['email']
-            user = User.objects.get(email=email)
+            user = User.objects.filter(email=email).get()
             return user, None
         except ValueError:
             raise exceptions.AuthenticationFailed('Invalid Token')

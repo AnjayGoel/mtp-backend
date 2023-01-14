@@ -20,8 +20,8 @@ from rest_framework import routers
 from api import views
 
 router = routers.DefaultRouter()
-views.PlayerViewSet.reverse_action("create",args=['1'])
 router.register(r'player', views.PlayerViewSet)
+print(router.urls)
 
 urlpatterns = [
     path('', include(router.urls)),

@@ -21,12 +21,22 @@ class PlayerViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         user_info = get_user_info(request)
-        user = User(
-            email=user_info["email"],
-            username=user_info["name"]
-        ).save()
-        player = Player(user=user, hall=request.data["hall"], year=request.data["year"])
+        try:
+            user = User.objects.filter(email=user_info["email"]).get()
+        except Exception as e:
+            user = User(
+                email=user_info["email"],
+                username=user_info["name"]
+            )
+            user.save()
+        player = Player(
+            user_id=user.id,
+            hall=request.data["hall"],
+            year=request.data["year"],
+            avatar=user_info["picture"]
+        )
         player.save()
+        return Response(status=200)
 
     @action(detail=False, methods=['get'], url_path="check")
     def check(self, request, pk=None):
