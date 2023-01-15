@@ -33,6 +33,7 @@ class PlayerViewSet(viewsets.ModelViewSet):
             user_id=user.id,
             hall=request.data["hall"],
             year=request.data["year"],
+            department=request.data["department"],
             avatar=user_info["picture"]
         )
         player.save()
@@ -40,7 +41,6 @@ class PlayerViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path="check")
     def check(self, request, pk=None):
-        print("HERE")
         user_info = get_user_info(request)
         return Response(data={"exists": self.queryset.filter(user__email=user_info['email']).count() == 1})
 
