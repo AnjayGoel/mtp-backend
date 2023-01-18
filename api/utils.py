@@ -1,3 +1,6 @@
+import random
+import string
+
 from google.auth.transport import requests
 from google.oauth2 import id_token
 import environ
@@ -15,3 +18,7 @@ def get_user_info(request):
         return id_token.verify_oauth2_token(token, requests.Request(), env('CLIENT_ID'))
     except Exception:
         return None
+
+
+def random_str():
+    return ''.join(random.choices(string.ascii_lowercase, k=6))
