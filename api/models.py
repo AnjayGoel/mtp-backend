@@ -12,7 +12,7 @@ class Player(models.Model):
 
     @staticmethod
     def get_if_exists(email):
-        objs = Player.objects.filter(user__email=email)
+        objs = Player.objects.filter(email=email)
         if objs.count() == 1:
             return objs.get()
         else:
