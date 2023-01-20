@@ -6,4 +6,4 @@ from api.models import Player
 class PlayerSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Player
-        fields = ['username', 'email', 'hall', 'year', 'department']
+        fields = ['name', 'email', 'avatar', 'hall', 'year', 'department']
