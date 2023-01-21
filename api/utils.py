@@ -24,4 +24,4 @@ def get_user_info(request):
 
 
 def random_str():
-    return ''.join(random.choices(string.ascii_lowercase, k=6))
+    return ''.join(random.choices(string.ascii_lowercase, k=10))

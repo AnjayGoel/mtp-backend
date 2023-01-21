@@ -1,11 +1,10 @@
 import logging
 
-from django.contrib.auth.models import User
+import environ
 from google.auth.transport import requests
 from google.oauth2 import id_token
 from rest_framework import authentication
 from rest_framework import exceptions
-import environ
 
 from api.models import Player
 
