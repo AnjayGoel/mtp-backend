@@ -5,16 +5,17 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
 from .models import Player, Game
+from .serializers import PlayerSerializer
 from .utils import random_str
 
 log = logging.getLogger(__name__)
 
 
 class Commands:
-    GAME_START = "GAME_START"
-    GAME_UPDATE = "GAME_UPDATE"
-    CHAT = "CHAT"
-    PLAYER_DISCONNECT = "PLAYER_DISCONNECT"
+    GAME_START = "game_start"
+    GAME_UPDATE = "game_update"
+    CHAT = "chat"
+    PLAYER_DISCONNECT = "player_disconnect"
 
 
 class GameConsumer(AsyncJsonWebsocketConsumer):
@@ -32,7 +33,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self.channels_info[self.channel_name] = self.player
         self.group_name = "lobby"
 
-        log.info(self.channels_info)
+        log.info(f"connected: {self.channel_name} - {self.channels_info}")
 
         await self.channel_layer.group_add("lobby", self.channel_name)
         await self.accept()
@@ -74,11 +75,13 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             }
         )
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
+        log.info(f"Disconnecting: {self.channel_name} - {self.channels_info}")
 
     async def receive_json(self, data, **kwargs):
-        log.info(f"chanel: {self.channel_name}: received: {json.dumps(data)}")
-
-        if data["event"] == Commands.CHAT:
+        log.info(f"JSON RECEIVED: chanel: {self.channel_name}: received: {json.dumps(data)}")
+        log.info(self.channels_info)
+        log.info(self.group_name)
+        if data["type"] == Commands.CHAT:
             await self.channel_layer.group_send(
                 self.group_name, data
             )
@@ -88,23 +91,26 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         await self.send_json(event)
 
     async def game_init(self, event):
-        log.info(f"event: {event}")
+        log.info(f"game init: {event}")
         self.game = event["game"]
+        self.group_name = event["group"]
         if self.channel_name == event["channels"][0]:
             self.opponent = self.channels_info[event["channels"][1]]
         else:
             self.opponent = self.channels_info[event["channels"][0]]
         await self.send_json({
-            "event": Commands.GAME_START,
+            "type": Commands.GAME_START,
             "data": {
                 "game_type": self.game.game_type,
-                "opponent": self.opponent
+                "opponent": PlayerSerializer(self.opponent).data
             }
         })
+        log.info(f"Current: {self.channel_name} Opponent: {self.opponent}")
 
     async def group_disconnect(self, event):
         log.info(f"user disconnected from group: {event}")
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
+        await self.send_json({"type": Commands.PLAYER_DISCONNECT})
         await self.disconnect(close_code=0)
         # await self.channel_layer.group_add("lobby", self.channel_name)
         # self.group_name = "lobby"
