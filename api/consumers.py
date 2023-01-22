@@ -30,6 +30,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(args, kwargs)
+        self.is_player_one = False
         self.player: Player = None
         self.opponent: Player = None
         self.game: Game = None
@@ -123,6 +124,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         data = event["data"]
         self.game = data["game"]
         self.group_name = data["group"]
+        self.is_player_one = self.channel_name == data["player_one"]
+
         if self.channel_name == data["channels"][0]:
             self.opponent = self.channels_info[data["channels"][1]]
         else:
