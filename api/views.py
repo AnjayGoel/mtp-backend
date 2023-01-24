@@ -7,7 +7,7 @@ from api.utils import get_user_info
 
 
 @api_view(['GET'])
-@authentication_classes([GoogleJWTAuthentication])
+@authentication_classes([])
 def status(request):
     return Response(data={"status": 200})
 
