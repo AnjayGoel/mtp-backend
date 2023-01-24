@@ -16,7 +16,10 @@ def status(request):
 @authentication_classes([])
 def check(request):
     user_info = get_user_info(request)
-    return Response(data={"exists": Player.objects.filter(email=user_info['email']).count() == 1})
+    if user_info is None:
+        return Response(data={"exists": False})
+    else:
+        return Response(data={"exists": Player.objects.filter(email=user_info['email']).count() == 1})
 
 
 @api_view(["POST"])
