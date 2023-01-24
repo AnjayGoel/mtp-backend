@@ -1,16 +1,12 @@
 import logging
+import os
 
-import environ
 from google.auth.transport import requests
 from google.oauth2 import id_token
 from rest_framework import authentication
 from rest_framework import exceptions
 
 from api.models import Player
-
-env = environ.Env()
-environ.Env.read_env(".env")
-log = logging.getLogger(__name__)
 
 
 class GoogleJWTAuthentication(authentication.BaseAuthentication):
@@ -22,7 +18,7 @@ class GoogleJWTAuthentication(authentication.BaseAuthentication):
 
         token = header.split(" ")[1]
         try:
-            info = id_token.verify_oauth2_token(token, requests.Request(), env('CLIENT_ID'))
+            info = id_token.verify_oauth2_token(token, requests.Request(), os.environ['CLIENT_ID'])
             email = info['email']
             player = Player.objects.filter(email=email).get()
             return player, None
