@@ -5,4 +5,3 @@ urlpatterns = [
     path('check/', views.check),
     path('', views.create),
 ]
-
