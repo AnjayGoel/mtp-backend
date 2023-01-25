@@ -91,7 +91,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': os.environ['DBNAME'],
-        'HOST': os.environ['DBHOST'] + ".postgres.database.azure.com" if not DEBUG else "",
+        'HOST': os.environ['DBHOST'],
         'USER': os.environ['DBUSER'],
         'PASSWORD': os.environ['DBPASS'],
         'PORT': '5432'
