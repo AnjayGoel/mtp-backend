@@ -29,7 +29,6 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
-    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -92,7 +91,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': os.environ['DBNAME'],
-        'HOST': os.environ['DBHOST'] + ".postgres.database.azure.com",
+        'HOST': os.environ['DBHOST'] + ".postgres.database.azure.com" if not DEBUG else "",
         'USER': os.environ['DBUSER'],
         'PASSWORD': os.environ['DBPASS'],
         'PORT': '5432'

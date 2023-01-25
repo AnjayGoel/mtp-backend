@@ -5,5 +5,5 @@ psycopg2
 django-cors-headers
 google-auth
 requests
-channels[daphne]
-daphne
+channels
+uvicorn[standard]
