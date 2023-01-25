@@ -8,20 +8,20 @@ CSRF_TRUSTED_ORIGINS = ['*']
 DEBUG = False
 
 # WhiteNoise configuration
-MIDDLEWARE = [                                                                   
+MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-# Add whitenoise middleware after the security middleware                             
+    # Add whitenoise middleware after the security middleware
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',                                 
-    'django.middleware.csrf.CsrfViewMiddleware',                                 
-    'django.contrib.auth.middleware.AuthenticationMiddleware',                   
-    'django.contrib.messages.middleware.MessageMiddleware',                      
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'  
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # DBHOST is only the server name, not the full URL
@@ -35,6 +35,6 @@ DATABASES = {
         'NAME': os.environ['DBNAME'],
         'HOST': hostname + ".postgres.database.azure.com",
         'USER': os.environ['DBUSER'],
-        'PASSWORD': os.environ['DBPASS'] 
+        'PASSWORD': os.environ['DBPASS']
     }
 }
