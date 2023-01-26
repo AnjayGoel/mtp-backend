@@ -11,6 +11,7 @@ class Player(models.Model):
     hall = models.CharField(name="hall", max_length=100)
     year = models.CharField(name="year", max_length=100)
     department = models.CharField(name="department", max_length=100)
+    upi_id = models.CharField(name="upi_id", max_length=100)
 
     @staticmethod
     def get_if_exists(email):
