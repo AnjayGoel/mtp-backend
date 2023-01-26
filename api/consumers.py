@@ -24,8 +24,8 @@ class Commands:
 
 
 class GameConsumer(AsyncJsonWebsocketConsumer):
-    channels_info = dict()
 
+    channels_info = dict()
     commands_list = [v for k, v in dict(vars(Commands)).items() if "__" not in k]
 
     def __init__(self, *args, **kwargs):
@@ -38,10 +38,10 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     async def connect(self):
         self.player = self.scope["user"]
-        self.channels_info[self.channel_name] = self.player
+        GameConsumer.channels_info[self.channel_name] = self.player
         self.group_name = "lobby"
 
-        log.info(f"Channel {self.channel_name}: connected.\nChannels info: {self.channels_info}")
+        log.info(f"Channel {self.channel_name}: connected.\nChannels info: {GameConsumer.channels_info}")
 
         await self.channel_layer.group_add("lobby", self.channel_name)
         await self.accept()
@@ -57,8 +57,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             await self.channel_layer.group_discard("lobby", player_two)
 
             game = Game(
-                player_one=self.channels_info[player_one],
-                player_two=self.channels_info[player_two]
+                player_one=GameConsumer.channels_info[player_one],
+                player_two=GameConsumer.channels_info[player_two]
             )
 
             await database_sync_to_async(game.save)()
@@ -77,8 +77,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             )
 
     async def disconnect(self, close_code):
-        if self.channel_name in self.channels_info:
-            del self.channels_info[self.channel_name]
+        if self.channel_name in GameConsumer.channels_info:
+            del GameConsumer.channels_info[self.channel_name]
         await self.channel_layer.group_send(
             self.group_name, {
                 "type": "group_disconnect",
@@ -86,7 +86,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             }
         )
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
-        log.info(f"Channel: {self.channel_name} Disconnecting. Channels {self.channels_info}")
+        log.info(f"Channel: {self.channel_name} Disconnecting. Channels {GameConsumer.channels_info}")
 
     async def receive_json(self, data, **kwargs):
         data["sender"] = self.channel_name
@@ -98,7 +98,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             f"Received: {json.dumps(data, indent=4)}\n"
             f"{data['type'] == Commands.WEB_RTC_MEDIA_OFFER}")
 
-        if data["type"] in self.commands_list:
+        if data["type"] in GameConsumer.commands_list:
             await self.channel_layer.group_send(
                 self.group_name, data
             )
@@ -127,9 +127,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self.is_player_one = self.channel_name == data["player_one"]
 
         if self.channel_name == data["channels"][0]:
-            self.opponent = self.channels_info[data["channels"][1]]
+            self.opponent = GameConsumer.channels_info[data["channels"][1]]
         else:
-            self.opponent = self.channels_info[data["channels"][0]]
+            self.opponent = GameConsumer.channels_info[data["channels"][0]]
         await self.send_json({
             "type": Commands.GAME_START,
             "data": {
