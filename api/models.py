@@ -13,6 +13,7 @@ class Player(models.Model):
     year = models.CharField(name="year", max_length=100)
     department = models.CharField(name="department", max_length=100)
     upi_id = models.CharField(name="upi_id", max_length=100)
+    channel_name = None
 
     @staticmethod
     def get_if_exists(email):
@@ -30,15 +31,18 @@ class Game(models.Model):
         VIDEO = 'VIDEO'
 
     game_id = models.UUIDField(name="game_id", primary_key=True, default=uuid.uuid4)
-    group_id = models.CharField(name="group_id", max_length=100)
-    player_one = models.ForeignKey(name="player_one", related_name="player_one", to=Player, on_delete=models.CASCADE)
-    player_two = models.ForeignKey(name="player_two", related_name="player_two", to=Player, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(name="created_at", default=datetime.now)
-    last_played = models.DateTimeField(name="last_played", default=datetime.now)
-    game_type = models.CharField(name="game_type", max_length=100)
-    state = models.JSONField(name="state", default=dict)
+    game_name = models.CharField(name="game_name", max_length=100)
     info_type = ArrayField(models.CharField(
         max_length=10,
         choices=InfoType.choices,
         default=InfoType.VIDEO,
     ), default=[InfoType.INFO, InfoType.CHAT, InfoType.VIDEO])
+
+    group_id = models.CharField(name="group_id", max_length=100)
+    server = models.ForeignKey(name="server", related_name="server", to=Player, on_delete=models.CASCADE)
+    client = models.ForeignKey(name="client", related_name="client", to=Player, on_delete=models.CASCADE)
+
+    created_at = models.DateTimeField(name="created_at", default=datetime.now)
+
+    state = models.JSONField(name="state", default=dict)
+    actions = models.JSONField(name="actions", default=dict)

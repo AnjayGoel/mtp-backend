@@ -1,43 +1,75 @@
+import logging
+
+from channels.db import database_sync_to_async
+
+from api.models import Player, Game
+
 games = ["prisoners_dilemma"]
 
 
-class GameType:
-    SEQ = "SEQ"
-    SIM = "SIM"
-
-
 class BaseGame:
-    state = []
-    game_type = None
-    player_one = None
-    player_two = None
-    info_type = None
-    server = None
+    state = {}
+    actions = []
+    server: Player = None
+    client: Player = None
+    info_type: Game.InfoType = None
     group_id = None
+    is_sim = False
+    game_name = None
 
-    def __init__(self, group_id, game_type, player_one, player_two, server, info_type):
-        self.game_type = game_type
-        self.player_one = player_one
-        self.player_two = player_two
-        self.info_type = info_type
+    def __init__(self, group_id, server, client, info_type):
         self.server = server
+        self.client = client
+        self.info_type = info_type
         self.group_id = group_id
-        self.game_type= GameType.SIM
+        self.state = {}
+        self.actions = []
 
     def update_state(self, event):
-        if self.game_type == GameType.SIM:
-            events = list(filter(lambda x: x['player'] != event['player'], self.state))
-            if len(events) > 0:
+        if event['sender'] == self.server.channel_name:
+            event['sender'] = self.server.email
+        else:
+            event['sender'] = self.client.email
+
+        if self.is_sim:
+            actions = list(filter(lambda x: x['sender'] == event['sender'], self.actions))
+
+            if len(actions) > 0:
                 return
-        self.state.append(event)
+
+            self.actions.append(event)
+            self.state[event['sender']] = event['data']
+        else:
+            self.actions.append(event)
 
     def is_complete(self):
-        if self.game_type == GameType.SIM and len(self.state) == 2:
+        if len(self.actions) == 2:
             return True
 
     def get_state(self):
         return self.state
 
+    async def save(self):
+        game = Game(
+            server=self.server,
+            client=self.client,
+            state=self.state,
+            actions=self.actions,
+            info_type=self.info_type,
+            group_id=self.group_id
+        )
+        await database_sync_to_async(game.save)()
 
-def get_game(group_id,game_type, player_one, player_two, server, info_type) -> BaseGame:
-    return BaseGame(group_id,game_type, player_one, player_two, server, info_type)
+
+class PrisonersDilemma(BaseGame):
+    def __init__(self, group_id, server, client, info_type):
+        super(PrisonersDilemma, self).__init__(group_id, server, client, info_type)
+        self.is_sim = True
+        self.game_name = "prisoners_dilemma"
+
+
+def get_game(group_id, server, client, info_type, game_name) -> BaseGame:
+    if game_name == "prisoners_dilemma":
+        return PrisonersDilemma(group_id, server, client, info_type)
+    else:
+        return BaseGame(group_id, server, client, info_type)
