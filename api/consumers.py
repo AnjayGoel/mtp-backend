@@ -151,7 +151,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                 "is_server": self.is_server,
                 "info_type": self.game.info_type,
                 "game_name": self.game.game_name,
-                "opponent": PlayerSerializer(self.opponent).data
+                "opponent": PlayerSerializer(self.opponent).data,
+                "config": self.game.config
             }
         })
         log.info(f"Current: {self.channel_name} Opponent: {self.opponent}")

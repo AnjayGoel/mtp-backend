@@ -16,6 +16,7 @@ class BaseGame:
     group_id = None
     is_sim = False
     game_name = None
+    config = None
 
     def __init__(self, group_id, server, client, info_type):
         self.server = server
@@ -24,6 +25,7 @@ class BaseGame:
         self.group_id = group_id
         self.state = {}
         self.actions = []
+        self.config = {}
 
     def update_state(self, event):
         if event['sender'] == self.server.channel_name:
@@ -66,6 +68,7 @@ class PrisonersDilemma(BaseGame):
         super(PrisonersDilemma, self).__init__(group_id, server, client, info_type)
         self.is_sim = True
         self.game_name = "prisoners_dilemma"
+        self.config = {"timeout": 60, "default": {"action": "d", "response": 5}}
 
 
 def get_game(group_id, server, client, info_type, game_name) -> BaseGame:
