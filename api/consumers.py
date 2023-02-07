@@ -4,7 +4,7 @@ import time
 # TODO: WebRTC going through right channel not lobby
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
-
+import random
 from .games import get_game, BaseGame
 from .models import Player, Game
 from .serializers import PlayerSerializer
@@ -111,11 +111,11 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         client = GameConsumer.channels_info[channels[1]]
 
         if info_type is None:
-            info_type = [
+            info_type = random.sample([
                 Game.InfoType.INFO,
                 Game.InfoType.VIDEO,
                 Game.InfoType.CHAT
-            ]
+            ], random.randint(0, 3))
 
         # TODO: Fix this
         game = get_game(
@@ -123,7 +123,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             server=server,
             client=client,
             info_type=info_type,
-            game_name="prisoners_dilemma"
+            game_name="trust_game"
+            # game_name="prisoners_dilemma"
         )
 
         await self.channel_layer.group_send(
@@ -164,10 +165,10 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             self.game.state = data["state"]
             self.game.actions = data["actions"]
 
-        if self.game.is_sim and not data["last_event"]["finished"]:
-            return
+        # if self.game.is_sim and not data["last_event"]["finished"]:
+        #    return
 
-        await self.send_json(data)
+        await self.send_json(message)
 
     async def server_game_update(self, event: dict):
 

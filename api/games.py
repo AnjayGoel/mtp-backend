@@ -1,5 +1,3 @@
-import logging
-
 from channels.db import database_sync_to_async
 
 from api.models import Player, Game
@@ -71,8 +69,18 @@ class PrisonersDilemma(BaseGame):
         self.config = {"timeout": 60, "default": {"action": "d", "response": 5}}
 
 
+class TrustGame(BaseGame):
+    def __init__(self, group_id, server, client, info_type):
+        super(TrustGame, self).__init__(group_id, server, client, info_type)
+        self.is_sim = True
+        self.game_name = "trust_game"
+        self.config = {"timeout": 60, "default": {"action": 50}}
+
+
 def get_game(group_id, server, client, info_type, game_name) -> BaseGame:
     if game_name == "prisoners_dilemma":
         return PrisonersDilemma(group_id, server, client, info_type)
+    elif game_name == "trust_game":
+        return TrustGame(group_id, server, client, info_type)
     else:
         return BaseGame(group_id, server, client, info_type)
