@@ -203,11 +203,11 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         if self.game.is_complete():
             await self.game.save()
             await self.channel_layer.group_send(self.group_id, message)
-            log.info('CREATE GAME')
             await self.create_game(
                 channels=[self.game.server.channel_name, self.game.client.channel_name],
                 group_name=self.group_id,
-                game_id=(self.game.game_id + 1) % 4
+                game_id=(self.game.game_id + 1) % 5,
+                info_type=self.game.info_type
             )
         else:
             await self.channel_layer.group_send(self.group_id, message)

@@ -55,7 +55,8 @@ class BaseGame:
             state=self.state,
             actions=self.actions,
             info_type=self.info_type,
-            group_id=self.group_id
+            group_id=self.group_id,
+            game_name=self.game_name
         )
         await database_sync_to_async(game.save)()
 
@@ -105,5 +106,9 @@ def get_game(group_id, server, client, info_type, game_id) -> BaseGame:
         return PrisonersDilemma(group_id, server, client, info_type)
     elif game_id == 3:
         return TrustGame(group_id, server, client, info_type)
+    elif game_id == 4:
+        game = BaseGame(group_id, server, client, info_type)
+        game.game_id = 4
+        return game
     else:
         return Intro(group_id, server, client, info_type)
