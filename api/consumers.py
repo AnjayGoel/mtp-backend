@@ -106,7 +106,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     async def chat(self, event):
         await self.send_json(event)
 
-    async def create_game(self, channels, group_name, info_type=None):
+    async def create_game(self, channels, group_name, info_type=None, game_id=0):
         server = GameConsumer.channels_info[channels[0]]
         client = GameConsumer.channels_info[channels[1]]
 
@@ -123,7 +123,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             server=server,
             client=client,
             info_type=info_type,
-            game_name="trust_game"
+            game_id=game_id
             # game_name="prisoners_dilemma"
         )
 
@@ -138,6 +138,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     async def game_start(self, event):
         log.info(f"Game Init: {event}")
         self.game = event["data"]
+        log.info(self.game.game_id)
+        log.info(self.game.game_name)
         self.group_id = self.game.group_id
         self.is_server = self.channel_name == self.game.server.channel_name
 
@@ -151,11 +153,18 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             "data": {
                 "is_server": self.is_server,
                 "info_type": self.game.info_type,
-                "game_name": self.game.game_name,
+                "game_id": self.game.game_id,
                 "opponent": PlayerSerializer(self.opponent).data,
                 "config": self.game.config
             }
         })
+        log.info({
+                "is_server": self.is_server,
+                "info_type": self.game.info_type,
+                "game_id": self.game.game_id,
+                "opponent": PlayerSerializer(self.opponent).data,
+                "config": self.game.config
+            })
         log.info(f"Current: {self.channel_name} Opponent: {self.opponent}")
 
     async def game_update(self, message):
@@ -180,11 +189,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         log.info(event)
         self.game.update_state(event.copy())
 
-        if self.game.is_complete():
-            event["finished"] = True
-        else:
-            event["finished"] = False
-
+        event["finished"] = self.game.is_complete()
         event['sender'] = GameConsumer.channels_info[event['sender']].email
         message = {
             "type": Commands.GAME_UPDATE,
@@ -198,10 +203,11 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         if self.game.is_complete():
             await self.game.save()
             await self.channel_layer.group_send(self.group_id, message)
-
+            log.info('CREATE GAME')
             await self.create_game(
                 channels=[self.game.server.channel_name, self.game.client.channel_name],
-                group_name=self.group_id
+                group_name=self.group_id,
+                game_id=(self.game.game_id + 1) % 4
             )
         else:
             await self.channel_layer.group_send(self.group_id, message)

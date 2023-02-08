@@ -30,6 +30,7 @@ class JwtAuthMiddleware(BaseMiddleware):
 
         player = await database_sync_to_async(Player.get_if_exists)(user_info['email'])
         if player is None:
+            logging.info('returning none')
             return None
 
         scope["user"] = player
