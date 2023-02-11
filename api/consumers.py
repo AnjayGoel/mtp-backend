@@ -67,10 +67,12 @@ class GameConsumer(WebRTCSignalingConsumer):
 
                 if settings.DEBUG:
                     have_played = False
-
                 else:
                     have_played = await database_sync_to_async(
                         Game.players_hava_played)(self_player.email, other_player.email)
+
+                # TODO: Fix this
+                have_played = False
 
                 if not have_played:
                     return [self.channel_name, channel]
@@ -153,7 +155,8 @@ class GameConsumer(WebRTCSignalingConsumer):
                 Game.InfoType.VIDEO,
                 Game.InfoType.CHAT
             ], random.randint(0, 3))
-            # info_type = [Game.InfoType.VIDEO]
+            # TODO Fix this
+            info_type = [Game.InfoType.VIDEO]
 
         game = get_game(
             group_id=group_name,
