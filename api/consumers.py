@@ -119,7 +119,6 @@ class GameConsumer(WebRTCSignalingConsumer):
         await self.send_json(event)
 
     async def create_game(self, channels, group_name, info_type=None, game_id=1):
-        log.info(f"GAME_ID : {game_id}")
         server = GameConsumer.channels_info[channels[0]]
         client = GameConsumer.channels_info[channels[1]]
 

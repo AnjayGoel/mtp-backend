@@ -4,8 +4,9 @@ from channels.auth import AuthMiddlewareStack
 from channels.db import database_sync_to_async
 from channels.middleware import BaseMiddleware
 from django.db import close_old_connections
+from django.conf import settings
 
-from api.models import Player
+from api.models import Player, Game
 from api.utils import get_user_info
 
 
@@ -24,7 +25,13 @@ class JwtAuthMiddleware(BaseMiddleware):
 
         player = await database_sync_to_async(Player.get_if_exists)(user_info['email'])
         if player is None:
-            logging.info('returning none')
+            logging.info(f"No Player found for {user_info['email']}")
+            return None
+
+        has_played = await database_sync_to_async(Game.player_has_participated)(user_info['email'])
+
+        if has_played and not settings.DEBUG:
+            logging.info(f"Player {user_info['email']} has already player")
             return None
 
         scope["user"] = player

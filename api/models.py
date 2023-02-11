@@ -1,3 +1,4 @@
+import logging
 import uuid
 from datetime import datetime
 from django.contrib.postgres.fields import ArrayField
@@ -46,3 +47,9 @@ class Game(models.Model):
 
     state = models.JSONField(name="state", default=dict)
     actions = models.JSONField(name="actions", default=dict)
+
+    @staticmethod
+    def player_has_participated(email):
+        server_count = Game.objects.filter(server=email, game_name="trust_game").count()
+        client_count = Game.objects.filter(client=email, game_name="trust_game").count()
+        return max(server_count, client_count) == 1

@@ -1,5 +1,3 @@
-import logging
-
 from channels.db import database_sync_to_async
 
 from api.models import Player, Game
