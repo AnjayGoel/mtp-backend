@@ -62,11 +62,16 @@ class GameConsumer(WebRTCSignalingConsumer):
         for channel in list(self.channel_layer.groups["lobby"].keys()):
             if channel != self.channel_name:
                 other_player = GameConsumer.channels_info[channel]
+                if other_player.email == self_player.email:
+                    continue
+
                 if settings.DEBUG:
                     have_played = False
+
                 else:
                     have_played = await database_sync_to_async(
                         Game.players_hava_played)(self_player.email, other_player.email)
+
                 if not have_played:
                     return [self.channel_name, channel]
         return None
@@ -148,6 +153,7 @@ class GameConsumer(WebRTCSignalingConsumer):
                 Game.InfoType.VIDEO,
                 Game.InfoType.CHAT
             ], random.randint(0, 3))
+            # info_type = [Game.InfoType.VIDEO]
 
         game = get_game(
             group_id=group_name,
@@ -228,7 +234,7 @@ class GameConsumer(WebRTCSignalingConsumer):
             await self.create_game(
                 channels=[self.game.server.channel_name, self.game.client.channel_name],
                 group_name=self.group_id,
-                game_id=(self.game.game_id + 1) % 5,
+                game_id=(self.game.game_id + 1) % 6,
                 info_type=self.game.info_type
             )
         else:
