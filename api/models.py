@@ -50,6 +50,14 @@ class Game(models.Model):
 
     @staticmethod
     def player_has_participated(email):
-        server_count = Game.objects.filter(server=email, game_name="trust_game").count()
-        client_count = Game.objects.filter(client=email, game_name="trust_game").count()
+        server_count = Game.objects.filter(server__email=email, game_name="trust_game").count()
+        client_count = Game.objects.filter(client__email=email, game_name="trust_game").count()
+        return max(server_count, client_count) == 1
+
+    @staticmethod
+    def players_hava_played(player_one, player_two):
+        server_count = Game.objects.filter(server__email=player_one, client__email=player_two,
+                                           game_name="trust_game").count()
+        client_count = Game.objects.filter(server__email=player_two, client__email=player_two,
+                                           game_name="trust_game").count()
         return max(server_count, client_count) == 1

@@ -28,11 +28,13 @@ class JwtAuthMiddleware(BaseMiddleware):
             logging.info(f"No Player found for {user_info['email']}")
             return None
 
+        """
         has_played = await database_sync_to_async(Game.player_has_participated)(user_info['email'])
 
         if has_played and not settings.DEBUG:
             logging.info(f"Player {user_info['email']} has already player")
             return None
+        """
 
         scope["user"] = player
         return await super().__call__(scope, receive, send)

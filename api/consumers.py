@@ -1,10 +1,14 @@
 import logging
+from typing import Dict, List
+
+from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 import random
 from .games import get_game, BaseGame
 from .models import Player, Game
 from .serializers import PlayerSerializer
 from .utils import random_str, dumps
+from django.conf import settings
 
 log = logging.getLogger(__name__)
 
@@ -43,7 +47,7 @@ class WebRTCSignalingConsumer(AsyncJsonWebsocketConsumer):
 
 
 class GameConsumer(WebRTCSignalingConsumer):
-    channels_info = dict()
+    channels_info: Dict[str, Player] = dict()
 
     def __init__(self, *args, **kwargs):
         super().__init__(args, kwargs)
@@ -52,6 +56,20 @@ class GameConsumer(WebRTCSignalingConsumer):
         self.opponent: Player = None
         self.game: BaseGame = None
         self.group_id = None
+
+    async def get_players(self) -> List:
+        self_player = GameConsumer.channels_info[self.channel_name]
+        for channel in list(self.channel_layer.groups["lobby"].keys()):
+            if channel != self.channel_name:
+                other_player = GameConsumer.channels_info[channel]
+                if settings.DEBUG:
+                    have_played = False
+                else:
+                    have_played = await database_sync_to_async(
+                        Game.players_hava_played)(self_player.email, other_player.email)
+                if not have_played:
+                    return [self.channel_name, channel]
+        return None
 
     async def connect(self):
         self.player = self.scope["user"]
@@ -68,8 +86,10 @@ class GameConsumer(WebRTCSignalingConsumer):
         await self.channel_layer.group_add("lobby", self.channel_name)
         await self.accept()
 
-        lobby_channels = list(self.channel_layer.groups["lobby"].keys())
-        if len(lobby_channels) > 1:
+        lobby_channels = await self.get_players()
+
+        if lobby_channels is not None:
+            log.info(' '.join(lobby_channels))
             group_name = random_str()
             await self.channel_layer.group_add(group_name, lobby_channels[0])
             await self.channel_layer.group_add(group_name, lobby_channels[1])
