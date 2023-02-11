@@ -1,14 +1,10 @@
-import json
 import logging
-import time
-# TODO: WebRTC going through right channel not lobby
-from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 import random
 from .games import get_game, BaseGame
 from .models import Player, Game
 from .serializers import PlayerSerializer
-from .utils import random_str
+from .utils import random_str, dumps
 
 log = logging.getLogger(__name__)
 
@@ -28,9 +24,26 @@ class Commands:
     WEB_RTC_REMOTE_PEER_ICE_CANDIDATE = "remote_peer_ice_candidate"
 
 
-class GameConsumer(AsyncJsonWebsocketConsumer):
+COMMANDS_LIST = [v for k, v in dict(vars(Commands)).items() if "__" not in k]
+
+
+class WebRTCSignalingConsumer(AsyncJsonWebsocketConsumer):
+    async def web_rtc_media_offer(self, event):
+        if event["sender"] != self.channel_name:
+            await self.send_json(event)
+
+    async def web_rtc_media_answer(self, event):
+        if event["sender"] != self.channel_name:
+            await self.send_json(event)
+
+    async def web_rtc_ice_candidate(self, event):
+        if event["sender"] != self.channel_name:
+            event["type"] = Commands.WEB_RTC_REMOTE_PEER_ICE_CANDIDATE
+            await self.send_json(event)
+
+
+class GameConsumer(WebRTCSignalingConsumer):
     channels_info = dict()
-    commands_list = [v for k, v in dict(vars(Commands)).items() if "__" not in k]
 
     def __init__(self, *args, **kwargs):
         super().__init__(args, kwargs)
@@ -45,10 +58,13 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self.player.channel_name = self.channel_name
 
         GameConsumer.channels_info[self.channel_name] = self.player
+
+        log.info(dumps({
+            "event": "player_connected",
+            "channels": GameConsumer.channels_info
+        }))
+
         self.group_id = "lobby"
-
-        log.info(f"Channel {self.channel_name}: connected.\nChannels info: {GameConsumer.channels_info}")
-
         await self.channel_layer.group_add("lobby", self.channel_name)
         await self.accept()
 
@@ -62,7 +78,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
             await self.create_game(
                 channels=lobby_channels,
-                group_name=group_name
+                group_name=group_name,
+                game_id=1
             )
 
     async def disconnect(self, close_code):
@@ -75,38 +92,34 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             }
         )
         await self.channel_layer.group_discard(self.group_id, self.channel_name)
-        log.info(f"Channel: {self.channel_name} Disconnecting. Channels {GameConsumer.channels_info}")
 
     async def receive_json(self, data, **kwargs):
         data["sender"] = self.channel_name
-        log.info(
-            f"----------------\n"
-            f"Chanel: {self.channel_name}\n"
-            f"Group: {self.group_id}\n"
-            f"Channels: {list(self.channel_layer.groups[self.group_id].keys())}\n"
-            f"Received: {json.dumps(data, indent=4)}\n"
-        )
+        log.info(dumps({
+            "chanel": self.channel_name,
+            "group": self.group_id,
+            "channels": list(self.channel_layer.groups[self.group_id].keys()),
+            "data": data
+        }))
 
         if data["type"] == Commands.GAME_UPDATE:
             data["type"] = Commands.SERVER_GAME_UPDATE
 
-        if data["type"] in GameConsumer.commands_list:
+        if data["type"] in COMMANDS_LIST:
             await self.channel_layer.group_send(
                 self.group_id, data
             )
 
     async def group_disconnect(self, event):
-        log.info(f"User disconnected from group: {event}")
         await self.channel_layer.group_discard(self.group_id, self.channel_name)
         await self.send_json({"type": Commands.PLAYER_DISCONNECT})
         await self.disconnect(close_code=0)
-        # await self.channel_layer.group_add("lobby", self.channel_name)
-        # self.group_name = "lobby"
 
     async def chat(self, event):
         await self.send_json(event)
 
-    async def create_game(self, channels, group_name, info_type=None, game_id=0):
+    async def create_game(self, channels, group_name, info_type=None, game_id=1):
+        log.info(f"GAME_ID : {game_id}")
         server = GameConsumer.channels_info[channels[0]]
         client = GameConsumer.channels_info[channels[1]]
 
@@ -117,14 +130,12 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                 Game.InfoType.CHAT
             ], random.randint(0, 3))
 
-        # TODO: Fix this
         game = get_game(
             group_id=group_name,
             server=server,
             client=client,
             info_type=info_type,
             game_id=game_id
-            # game_name="prisoners_dilemma"
         )
 
         await self.channel_layer.group_send(
@@ -136,10 +147,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         )
 
     async def game_start(self, event):
-        log.info(f"Game Init: {event}")
         self.game = event["data"]
-        log.info(self.game.game_id)
-        log.info(self.game.game_name)
+        log.info(dumps(event))
         self.group_id = self.game.group_id
         self.is_server = self.channel_name == self.game.server.channel_name
 
@@ -158,37 +167,31 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                 "config": self.game.config
             }
         })
-        log.info({
-                "is_server": self.is_server,
-                "info_type": self.game.info_type,
-                "game_id": self.game.game_id,
-                "opponent": PlayerSerializer(self.opponent).data,
-                "config": self.game.config
-            })
-        log.info(f"Current: {self.channel_name} Opponent: {self.opponent}")
+        log.info(dumps({
+            "is_server": self.is_server,
+            "info_type": self.game.info_type,
+            "game_id": self.game.game_id,
+            "opponent": PlayerSerializer(self.opponent).data,
+            "config": self.game.config
+        }))
 
     async def game_update(self, message):
+        log.info(dumps(message))
+
         data = message["data"]
-        log.info(json.dumps(data, indent=4))
         if not self.is_server:
             self.game.state = data["state"]
             self.game.actions = data["actions"]
-
-        # if self.game.is_sim and not data["last_event"]["finished"]:
-        #    return
-
         await self.send_json(message)
 
     async def server_game_update(self, event: dict):
-
         if not self.is_server:
             return
 
+        log.info(dumps(event))
+
         event["type"] = Commands.GAME_UPDATE
-
-        log.info(event)
         self.game.update_state(event.copy())
-
         event["finished"] = self.game.is_complete()
         event['sender'] = GameConsumer.channels_info[event['sender']].email
         message = {
@@ -211,16 +214,3 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             )
         else:
             await self.channel_layer.group_send(self.group_id, message)
-
-    async def web_rtc_media_offer(self, event):
-        if event["sender"] != self.channel_name:
-            await self.send_json(event)
-
-    async def web_rtc_media_answer(self, event):
-        if event["sender"] != self.channel_name:
-            await self.send_json(event)
-
-    async def web_rtc_ice_candidate(self, event):
-        if event["sender"] != self.channel_name:
-            event["type"] = Commands.WEB_RTC_REMOTE_PEER_ICE_CANDIDATE
-            await self.send_json(event)

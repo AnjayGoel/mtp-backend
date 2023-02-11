@@ -6,8 +6,6 @@ from google.oauth2 import id_token
 from rest_framework import authentication
 from rest_framework import exceptions
 
-from api.models import Player
-
 log = logging.getLogger(__name__)
 
 

@@ -1,3 +1,4 @@
+import json
 import random
 import string
 
@@ -25,3 +26,7 @@ def get_user_info(request):
 
 def random_str():
     return ''.join(random.choices(string.ascii_lowercase, k=10))
+
+
+def dumps(data):
+    return json.dumps(data, indent=4, default=lambda __o: str(__o.__dict__))

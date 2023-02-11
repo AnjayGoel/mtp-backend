@@ -1,3 +1,5 @@
+import logging
+
 from channels.db import database_sync_to_async
 
 from api.models import Player, Game
@@ -20,6 +22,7 @@ class BaseGame:
         self.client = client
         self.info_type = info_type
         self.group_id = group_id
+        self.game_name = "base"
         self.state = {}
         self.actions = []
         self.config = {}
@@ -66,7 +69,7 @@ class Intro(BaseGame):
         super(Intro, self).__init__(group_id, server, client, info_type)
         self.is_sim = True
         self.game_name = "intro"
-        self.game_id = 0
+        self.game_id = 1
         self.config = {"timeout": 90, "default": {"trust": 5, "know": False}}
 
 
@@ -75,7 +78,7 @@ class Machine(BaseGame):
         super(Machine, self).__init__(group_id, server, client, info_type)
         self.is_sim = True
         self.game_name = "machine"
-        self.game_id = 1
+        self.game_id = 2
         self.config = {"timeout": 60, "default": {"action": "d"}}
 
 
@@ -84,7 +87,7 @@ class PrisonersDilemma(BaseGame):
         super(PrisonersDilemma, self).__init__(group_id, server, client, info_type)
         self.is_sim = True
         self.game_name = "prisoners_dilemma"
-        self.game_id = 2
+        self.game_id = 3
         self.config = {"timeout": 60, "default": {"action": "d"}}
 
 
@@ -93,22 +96,21 @@ class TrustGame(BaseGame):
         super(TrustGame, self).__init__(group_id, server, client, info_type)
         self.is_sim = True
         self.game_name = "trust_game"
-        self.game_id = 3
+        self.game_id = 4
         self.config = {"timeout": 60, "default": {"action": 50}}
 
 
+GAME_MAP = {
+    0: BaseGame,
+    1: Intro,
+    2: Machine,
+    3: PrisonersDilemma,
+    4: TrustGame,
+}
+
+
 def get_game(group_id, server, client, info_type, game_id) -> BaseGame:
-    if game_id == 0:
-        return Intro(group_id, server, client, info_type)
-    elif game_id == 1:
-        return Machine(group_id, server, client, info_type)
-    elif game_id == 2:
-        return PrisonersDilemma(group_id, server, client, info_type)
-    elif game_id == 3:
-        return TrustGame(group_id, server, client, info_type)
-    elif game_id == 4:
-        game = BaseGame(group_id, server, client, info_type)
-        game.game_id = 4
-        return game
+    if game_id in GAME_MAP:
+        return GAME_MAP[game_id](group_id, server, client, info_type)
     else:
-        return Intro(group_id, server, client, info_type)
+        return BaseGame(group_id, server, client, info_type)

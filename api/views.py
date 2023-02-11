@@ -36,23 +36,6 @@ def get_user(request):
 @authentication_classes([GoogleJWTAuthentication, ])
 def signup_or_update(request):
     user_info = get_user_info(request)
-
-    """
-    # player = Player.objects.filter(email=user_info["email"])
-    # if player.count() != 0:
-    #    return Response(status=400, data={"message": "User already exists"})
-
-    player = Player(
-        email=user_info["email"],
-        name=user_info["name"],
-        avatar=user_info["picture"],
-        hall=request.data["hall"],
-        year=request.data["year"],
-        department=request.data["department"],
-        upi_id=request.data["upi_id"]
-    )
-    player.save()
-    """
     Player.objects.update_or_create(
         email=user_info["email"],
         defaults={

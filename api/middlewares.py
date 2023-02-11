@@ -17,13 +17,7 @@ class JwtAuthMiddleware(BaseMiddleware):
         close_old_connections()
 
         token = str(scope["query_string"]).split("=")[1] + "=="
-
-        logging.info(token)
-
         user_info = get_user_info(token)
-
-        logging.info(user_info)
-        logging.info('user info')
 
         if user_info is None:
             return None
