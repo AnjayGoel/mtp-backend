@@ -17,7 +17,7 @@ class Commands:
     GAME_START = "game_start"
     GAME_UPDATE = "game_update"
     SERVER_GAME_UPDATE = "server_game_update"
-    GAME_END = "game_end"
+    RETRY_MATCHING = "retry_matching"
 
     CHAT = "chat"
     PLAYER_DISCONNECT = "player_disconnect"
@@ -78,20 +78,9 @@ class GameConsumer(WebRTCSignalingConsumer):
                     return [self.channel_name, channel]
         return None
 
-    async def connect(self):
-        self.player = self.scope["user"]
-        self.player.channel_name = self.channel_name
-
-        GameConsumer.channels_info[self.channel_name] = self.player
-
-        log.info(dumps({
-            "event": "player_connected",
-            "channels": GameConsumer.channels_info
-        }))
-
-        self.group_id = "lobby"
-        await self.channel_layer.group_add("lobby", self.channel_name)
-        await self.accept()
+    async def match_players(self):
+        if self.group_id != "lobby":
+            return
 
         lobby_channels = await self.get_players()
 
@@ -108,6 +97,22 @@ class GameConsumer(WebRTCSignalingConsumer):
                 group_name=group_name,
                 game_id=1
             )
+
+    async def connect(self):
+        self.player = self.scope["user"]
+        self.player.channel_name = self.channel_name
+
+        GameConsumer.channels_info[self.channel_name] = self.player
+
+        log.info(dumps({
+            "event": "player_connected",
+            "channels": GameConsumer.channels_info
+        }))
+
+        self.group_id = "lobby"
+        await self.channel_layer.group_add("lobby", self.channel_name)
+        await self.accept()
+        await self.match_players()
 
     async def disconnect(self, close_code):
         if self.channel_name in GameConsumer.channels_info:
@@ -128,6 +133,10 @@ class GameConsumer(WebRTCSignalingConsumer):
             "channels": list(self.channel_layer.groups[self.group_id].keys()),
             "data": data
         }))
+
+        if data["type"] == Commands.RETRY_MATCHING:
+            await self.match_players()
+            return
 
         if data["type"] == Commands.GAME_UPDATE:
             data["type"] = Commands.SERVER_GAME_UPDATE
