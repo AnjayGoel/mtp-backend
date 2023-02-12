@@ -58,6 +58,9 @@ class GameConsumer(WebRTCSignalingConsumer):
         self.group_id = None
 
     async def get_players(self) -> List:
+        log.info(f"Active channels: {self.channel_layer.groups['lobby'].keys()}")
+        log.info(f"Self: {self.channel_name}")
+        log.info('-' * 30)
         self_player = GameConsumer.channels_info[self.channel_name]
         for channel in list(self.channel_layer.groups["lobby"].keys()):
             if channel != self.channel_name:
