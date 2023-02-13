@@ -74,7 +74,8 @@ class Active:
 
     @staticmethod
     def set(name, player: Player):
-        obj = Active.all()
+        obj: Dict[str, Player] = Active.all()
+        obj = {k: v for k, v in obj.items() if v.email != player.email}
         obj[name] = player
         cache.set('active_channels', obj, 60 * 30)
 
