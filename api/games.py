@@ -49,7 +49,7 @@ class BaseGame:
     def get_state(self):
         return self.state
 
-    async def save(self):
+    def save(self):
         game = Game(
             server=self.server,
             client=self.client,
@@ -59,7 +59,7 @@ class BaseGame:
             group_id=self.group_id,
             game_name=self.game_name
         )
-        await database_sync_to_async(game.save)()
+        game.save()
 
 
 class Intro(BaseGame):

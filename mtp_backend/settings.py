@@ -58,9 +58,12 @@ CORS_ALLOW_CREDENTIALS = True
 ASGI_APPLICATION = "mtp_backend.asgi.application"
 
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': "channels.layers.InMemoryChannelLayer"
-    }
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [os.environ["REDIS_CONNECTION_STR"]],
+        },
+    },
 }
 
 ROOT_URLCONF = 'mtp_backend.urls'
@@ -68,8 +71,7 @@ ROOT_URLCONF = 'mtp_backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
-        ,
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
