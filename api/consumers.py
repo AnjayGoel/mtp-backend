@@ -76,6 +76,7 @@ class GameConsumer(WebRTCSignalingConsumer):
         return async_to_sync(inner)(group)
 
     def get_players(self) -> List:
+        GameConsumer.channels_info[self.channel_name] = self.player
         log.info(f"Channels: {self.get_group_members('lobby')}")
         log.info(f"Self: {self.channel_name}")
         log.info(f"Saved: {GameConsumer.channels_info}")
