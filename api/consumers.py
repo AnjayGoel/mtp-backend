@@ -183,6 +183,9 @@ class GameConsumer(WebRTCSignalingConsumer):
         super(GameConsumer, self).disconnect(close_code)
 
     def receive_json(self, data, **kwargs):
+        if self.group_id != "lobby" and len(self.get_group_members(self.group_id)) < 2:
+            self.disconnect(0)
+
         data["sender"] = self.channel_name
         log.info(dumps({
             "chanel": self.channel_name,
