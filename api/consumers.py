@@ -135,6 +135,7 @@ class GameConsumer(WebRTCSignalingConsumer):
         if self.group_id != "lobby":
             async_to_sync(self.channel_layer.group_discard)(self.group_id, self.channel_name)
             async_to_sync(self.channel_layer.group_add)("lobby", self.channel_name)
+            self.group_id = "lobby"
 
         lobby_channels = self.get_players()
 
