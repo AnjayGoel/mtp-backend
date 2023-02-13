@@ -1,7 +1,7 @@
 import logging
 import pickle
 from typing import Dict, List
-
+from django.core.cache import cache
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import JsonWebsocketConsumer
 import random
@@ -54,9 +54,39 @@ class WebRTCSignalingConsumer(JsonWebsocketConsumer):
         log.info('-' * 20)
 
 
-class GameConsumer(WebRTCSignalingConsumer):
-    channels_info: Dict[str, Player] = dict()
+class Active:
+    @staticmethod
+    def all():
+        obj = cache.get('active_channels')
+        if obj is None:
+            cache.set('active_channels', {}, 60 * 30)
+            return {}
+        else:
+            return obj
 
+    @staticmethod
+    def get(name) -> Player:
+        obj = Active.all()
+        if name in obj:
+            return obj[name]
+        else:
+            return None
+
+    @staticmethod
+    def set(name, player: Player):
+        obj = Active.all()
+        obj[name] = player
+        cache.set('active_channels', obj, 60 * 30)
+
+    @staticmethod
+    def delete(name):
+        obj = Active.all()
+        if name in obj:
+            del obj[name]
+        cache.set('active_channels', obj, 60 * 30)
+
+
+class GameConsumer(WebRTCSignalingConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(args, kwargs)
         self.is_server = False
@@ -76,17 +106,16 @@ class GameConsumer(WebRTCSignalingConsumer):
         return async_to_sync(inner)(group)
 
     def get_players(self) -> List:
-        GameConsumer.channels_info[self.channel_name] = self.player
+        Active.set(self.channel_name, self.player)
         log.info(f"Channels: {self.get_group_members('lobby')}")
         log.info(f"Self: {self.channel_name}")
-        log.info(f"Saved: {GameConsumer.channels_info}")
+        log.info(f"Saved: {Active.all()}")
         log.info('-' * 30)
 
-        self_player = GameConsumer.channels_info[self.channel_name]
         for channel in self.get_group_members("lobby"):
-            if channel != self.channel_name and channel in GameConsumer.channels_info:
-                other_player = GameConsumer.channels_info[channel]
-                if other_player.email == self_player.email:
+            if channel != self.channel_name and channel in Active.all():
+                other_player = Active.get(channel)
+                if other_player.email == self.player.email:
                     continue
 
                 if settings.DEBUG:
@@ -127,11 +156,11 @@ class GameConsumer(WebRTCSignalingConsumer):
         self.player = self.scope["user"]
         self.player.channel_name = self.channel_name
 
-        GameConsumer.channels_info[self.channel_name] = self.player
+        Active.set(self.channel_name, self.player)
 
         log.info(dumps({
             "event": "player_connected",
-            "channels": GameConsumer.channels_info
+            "channels": Active.all()
         }))
 
         self.group_id = "lobby"
@@ -140,8 +169,7 @@ class GameConsumer(WebRTCSignalingConsumer):
         self.create_group()
 
     def disconnect(self, close_code):
-        if self.channel_name in GameConsumer.channels_info:
-            del GameConsumer.channels_info[self.channel_name]
+        Active.delete(self.channel_name)
         async_to_sync(self.channel_layer.group_send)(
             self.group_id, {
                 "type": "player_disconnect",
@@ -183,8 +211,8 @@ class GameConsumer(WebRTCSignalingConsumer):
         self.send_json(event)
 
     def create_game(self, channels, group_name, info_type=None, game_id=1):
-        server = GameConsumer.channels_info[channels[0]]
-        client = GameConsumer.channels_info[channels[1]]
+        server = Active.get(channels[0])
+        client = Active.get(channels[1])
 
         if info_type is None:
             info_type = random.sample([
@@ -262,7 +290,7 @@ class GameConsumer(WebRTCSignalingConsumer):
 
         self.game.update_state(data.copy())
         data["finished"] = self.game.is_complete()
-        data['sender'] = GameConsumer.channels_info[data['sender']].email
+        data['sender'] = Active.get(data['sender']).email
         message = {
             "type": Commands.GAME_UPDATE,
             "data": {
