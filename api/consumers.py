@@ -16,7 +16,7 @@ from django.conf import settings
 log = logging.getLogger(__name__)
 
 
-class Commands:
+class C:
     GAME_START = "game_start"
     GAME_UPDATE = "game_update"
     SERVER_GAME_UPDATE = "server_game_update"
@@ -30,14 +30,16 @@ class Commands:
     WEB_RTC_ICE_CANDIDATE = "web_rtc_ice_candidate"
     WEB_RTC_REMOTE_PEER_ICE_CANDIDATE = "remote_peer_ice_candidate"
 
+    WRTC_COMMANDS = [
+        WEB_RTC_REMOTE_PEER_ICE_CANDIDATE,
+        WEB_RTC_ICE_CANDIDATE,
+        WEB_RTC_MEDIA_OFFER,
+        WEB_RTC_MEDIA_ANSWER
+    ]
+    IGNORE_LOG = WRTC_COMMANDS + []
 
-WRTC_COMMANDS = [
-    Commands.WEB_RTC_REMOTE_PEER_ICE_CANDIDATE,
-    Commands.WEB_RTC_ICE_CANDIDATE,
-    Commands.WEB_RTC_MEDIA_OFFER,
-    Commands.WEB_RTC_MEDIA_ANSWER
-]
-COMMANDS_LIST = [v for k, v in dict(vars(Commands)).items() if "__" not in k]
+
+COMMANDS_LIST = [v for k, v in dict(vars(C)).items() if "__" not in k]
 
 
 class WebRTCSignalingConsumer(JsonWebsocketConsumer):
@@ -48,7 +50,7 @@ class WebRTCSignalingConsumer(JsonWebsocketConsumer):
         self.send_json(event)
 
     def web_rtc_ice_candidate(self, event):
-        event["type"] = Commands.WEB_RTC_REMOTE_PEER_ICE_CANDIDATE
+        event["type"] = C.WEB_RTC_REMOTE_PEER_ICE_CANDIDATE
         self.send_json(event)
 
     def remote_peer_ice_candidate(self, event):
@@ -95,6 +97,64 @@ class GameConsumer(WebRTCSignalingConsumer):
         self.game: BaseGame = None
         self.group_id = None
 
+    def connect(self):
+        self.player = self.scope["user"]
+        self.player.channel_name = self.channel_name
+
+        self.add_to_lobby(self.channel_name, self.player, None)
+        self.group_id = "lobby"
+
+        log.info(dumps({
+            "event": "player_connected",
+            "channels": Active.all()
+        }))
+
+        self.accept()
+        self.create_group()
+
+    def disconnect(self, close_code):
+        log.info(f"disconnect: {self.channel_name}, {close_code}")
+
+        async_to_sync(self.channel_layer.group_send)(
+            self.group_id, {
+                "type": "player_disconnect",
+                "sender": self.channel_name
+            }
+        )
+
+        if self.group_id == "lobby":
+            self.add_to_group(self.channel_name, self.player, None)
+        else:
+            async_to_sync(self.channel_layer.group_discard)(self.group_id, self.channel_name)
+        super(GameConsumer, self).disconnect(close_code)
+
+    def receive_json(self, data, **kwargs):
+        data["sender"] = self.channel_name
+
+        if data['type'] not in C.IGNORE_LOG:
+            log.info(dumps({
+                "chanel": self.channel_name,
+                "group": self.group_id,
+                "data": data
+            }))
+
+        if data["type"] == C.RETRY_MATCHING:
+            self.create_group()
+
+        elif data["type"] == C.GAME_UPDATE:
+            async_to_sync(self.channel_layer.send)(
+                self.game.server.channel_name,
+                {"type": C.HANDLE_GAME_EVENT, "data": data}
+            )
+
+        elif data["type"] in C.WRTC_COMMANDS:
+            async_to_sync(self.channel_layer.send)(self.opponent.channel_name, data)
+
+        elif data["type"] in COMMANDS_LIST:
+            async_to_sync(self.channel_layer.group_send)(
+                self.group_id, data
+            )
+
     def add_to_lobby(self, channel_name, player, prev_group_id):
         if prev_group_id is not None:
             async_to_sync(self.channel_layer.group_discard)(prev_group_id, channel_name)
@@ -132,7 +192,7 @@ class GameConsumer(WebRTCSignalingConsumer):
         return None
 
     def create_group(self):
-        if self.group_id != "lobby":
+        if self.channel_name not in Active.all():
             self.add_to_lobby(self.channel_name, self.player, self.group_id)
             self.group_id = "lobby"
 
@@ -157,68 +217,9 @@ class GameConsumer(WebRTCSignalingConsumer):
                 game_id=1
             )
 
-    def connect(self):
-        self.player = self.scope["user"]
-        self.player.channel_name = self.channel_name
-
-        self.add_to_lobby(self.channel_name, self.player, None)
-        self.group_id = "lobby"
-
-        log.info(dumps({
-            "event": "player_connected",
-            "channels": Active.all()
-        }))
-
-        self.accept()
-        self.create_group()
-
-    def disconnect(self, close_code):
-        log.info(f"disconnect: {self.channel_name}, {close_code}")
-
-        async_to_sync(self.channel_layer.group_send)(
-            self.group_id, {
-                "type": "player_disconnect",
-                "sender": self.channel_name
-            }
-        )
-
-        if self.group_id == "lobby":
-            self.add_to_group(self.channel_name, self.player, None)
-        else:
-            async_to_sync(self.channel_layer.group_discard)(self.group_id, self.channel_name)
-        super(GameConsumer, self).disconnect(close_code)
-
-    def receive_json(self, data, **kwargs):
-        data["sender"] = self.channel_name
-
-        if data['type'] not in WRTC_COMMANDS:
-            log.info(dumps({
-                "chanel": self.channel_name,
-                "group": self.group_id,
-                "data": data
-            }))
-
-        if data["type"] == Commands.RETRY_MATCHING:
-            self.create_group()
-
-        elif data["type"] == Commands.GAME_UPDATE:
-            async_to_sync(self.channel_layer.send)(
-                self.game.server.channel_name,
-                {"type": Commands.HANDLE_GAME_EVENT, "data": data}
-            )
-            # self.handle_game_event(data)
-
-        elif data["type"] in WRTC_COMMANDS:
-            async_to_sync(self.channel_layer.send)(self.opponent.channel_name, data)
-
-        elif data["type"] in COMMANDS_LIST:
-            async_to_sync(self.channel_layer.group_send)(
-                self.group_id, data
-            )
-
     def player_disconnect(self, event):
         async_to_sync(self.channel_layer.group_discard)(self.group_id, self.channel_name)
-        self.send_json({"type": Commands.PLAYER_DISCONNECT})
+        self.send_json({"type": C.PLAYER_DISCONNECT})
         self.disconnect(close_code=0)
 
     def chat(self, event):
@@ -245,7 +246,7 @@ class GameConsumer(WebRTCSignalingConsumer):
         async_to_sync(self.channel_layer.group_send)(
             group_name,
             {
-                "type": Commands.GAME_START,
+                "type": C.GAME_START,
                 "data": pickle.dumps(game)
             }
         )
@@ -265,7 +266,7 @@ class GameConsumer(WebRTCSignalingConsumer):
             self.opponent = self.game.server
 
         self.send_json({
-            "type": Commands.GAME_START,
+            "type": C.GAME_START,
             "data": {
                 "is_server": self.is_server,
                 "info_type": self.game.info_type,
@@ -282,17 +283,6 @@ class GameConsumer(WebRTCSignalingConsumer):
             "config": self.game.config
         }))
 
-    def game_update(self, message):
-        log.info(f'----------GAME UPDATE ({self.is_server})--------------')
-        log.info(dumps(message))
-
-        data = message["data"]
-        log.info(data)
-
-        self.game.state = data["state"]
-        self.game.actions = data["actions"]
-        self.send_json(message)
-
     def handle_game_event(self, message: dict):
         log.info('----------SERVER GAME UPDATE--------------')
         log.info(dumps(message))
@@ -303,7 +293,7 @@ class GameConsumer(WebRTCSignalingConsumer):
         data["finished"] = self.game.is_complete()
         data['sender'] = self.player.email if data['sender'] == self.channel_name else self.opponent.email
         message = {
-            "type": Commands.GAME_UPDATE,
+            "type": C.GAME_UPDATE,
             "data": {
                 "last_event": data,
                 "state": self.game.state,
@@ -327,3 +317,14 @@ class GameConsumer(WebRTCSignalingConsumer):
                 self.disconnect(123)
         else:
             async_to_sync(self.channel_layer.group_send)(self.group_id, message)
+
+    def game_update(self, message):
+        log.info(f'----------GAME UPDATE ({self.is_server})--------------')
+        log.info(dumps(message))
+
+        data = message["data"]
+        log.info(data)
+
+        self.game.state = data["state"]
+        self.game.actions = data["actions"]
+        self.send_json(message)
