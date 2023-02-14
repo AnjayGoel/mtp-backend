@@ -123,7 +123,7 @@ class GameConsumer(WebRTCSignalingConsumer):
         )
 
         if self.group_id == "lobby":
-            self.add_to_group(self.channel_name, self.player, None)
+            self.add_to_group(self.channel_name, None)
         else:
             async_to_sync(self.channel_layer.group_discard)(self.group_id, self.channel_name)
         super(GameConsumer, self).disconnect(close_code)
