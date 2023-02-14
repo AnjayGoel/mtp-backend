@@ -53,10 +53,6 @@ class WebRTCSignalingConsumer(JsonWebsocketConsumer):
         event["type"] = C.WEB_RTC_REMOTE_PEER_ICE_CANDIDATE
         self.send_json(event)
 
-    def remote_peer_ice_candidate(self, event):
-        log.info(event)
-        log.info('-' * 20)
-
 
 class Active:
     @staticmethod
@@ -106,6 +102,8 @@ class GameConsumer(WebRTCSignalingConsumer):
 
         log.info(dumps({
             "event": "player_connected",
+            "player": self.player.email,
+            "channel": self.player.channel_name,
             "channels": Active.all()
         }))
 
@@ -113,7 +111,12 @@ class GameConsumer(WebRTCSignalingConsumer):
         self.create_group()
 
     def disconnect(self, close_code):
-        log.info(f"disconnect: {self.channel_name}, {close_code}")
+        log.info(dumps({
+            "event": C.PLAYER_DISCONNECT,
+            "player": self.player.email,
+            "channel": self.player.channel_name,
+            "channels": Active.all()
+        }))
 
         async_to_sync(self.channel_layer.group_send)(
             self.group_id, {
@@ -168,14 +171,19 @@ class GameConsumer(WebRTCSignalingConsumer):
         Active.delete(channel_name)
 
     def find_opponent(self) -> List:
-        log.info(f"Group Id: {self.group_id}")
-        log.info(f"Self: {self.channel_name}")
-        log.info(f"Active: {Active.all()}")
-        log.info('-' * 30)
+        log.info(dumps(
+            {
+                "group": self.group_id,
+                "self": self.channel_name,
+                "active": Active.all()
+            }
+        ))
 
-        for channel in Active.all().keys():
+        players = Active.all()
+
+        for channel in players:
             if channel != self.channel_name:
-                other_player = Active.get(channel)
+                other_player = players[channel]
                 if other_player.email == self.player.email:
                     continue
 
@@ -198,10 +206,15 @@ class GameConsumer(WebRTCSignalingConsumer):
 
         lobby_channels = self.find_opponent()
 
-        log.info(f'matched: {lobby_channels}')
+        log.info(dumps(
+            {
+                "event": "matched",
+                "player": self.player.email,
+                "channels": lobby_channels
+            }
+        ))
 
         if lobby_channels is not None:
-            log.info(' '.join(lobby_channels))
             group_name = random_str()
 
             server = Active.get(lobby_channels[0])
@@ -254,9 +267,6 @@ class GameConsumer(WebRTCSignalingConsumer):
     def game_start(self, event):
         game = pickle.loads(event['data'])
         self.game = game
-        log.info(self.game.server)
-        log.info(self.game.client)
-
         self.group_id = self.game.group_id
         self.is_server = self.channel_name == self.game.server.channel_name
 
@@ -265,7 +275,7 @@ class GameConsumer(WebRTCSignalingConsumer):
         else:
             self.opponent = self.game.server
 
-        self.send_json({
+        message = {
             "type": C.GAME_START,
             "data": {
                 "is_server": self.is_server,
@@ -274,24 +284,18 @@ class GameConsumer(WebRTCSignalingConsumer):
                 "opponent": PlayerSerializer(self.opponent).data,
                 "config": self.game.config
             }
-        })
-        log.info(dumps({
-            "is_server": self.is_server,
-            "info_type": self.game.info_type,
-            "game_id": self.game.game_id,
-            "opponent": PlayerSerializer(self.opponent).data,
-            "config": self.game.config
-        }))
+        }
 
-    def handle_game_event(self, message: dict):
-        log.info('----------SERVER GAME UPDATE--------------')
+        self.send_json(message)
         log.info(dumps(message))
 
+    def handle_game_event(self, message: dict):
         data = message['data']
 
-        self.game.update_state(data.copy())
+        self.game.update_state(data)
         data["finished"] = self.game.is_complete()
         data['sender'] = self.player.email if data['sender'] == self.channel_name else self.opponent.email
+
         message = {
             "type": C.GAME_UPDATE,
             "data": {
@@ -300,12 +304,10 @@ class GameConsumer(WebRTCSignalingConsumer):
                 "actions": self.game.actions
             }
         }
-        log.info('######')
-        log.info(message)
+
+        async_to_sync(self.channel_layer.group_send)(self.group_id, message)
         if self.game.is_complete():
-            log.info("COMPLETE")
             self.game.save()
-            async_to_sync(self.channel_layer.group_send)(self.group_id, message)
             self.init_game(
                 server=self.game.server,
                 client=self.game.client,
@@ -315,16 +317,9 @@ class GameConsumer(WebRTCSignalingConsumer):
             )
             if self.game.game_name == "outro":
                 self.disconnect(123)
-        else:
-            async_to_sync(self.channel_layer.group_send)(self.group_id, message)
 
     def game_update(self, message):
-        log.info(f'----------GAME UPDATE ({self.is_server})--------------')
-        log.info(dumps(message))
-
         data = message["data"]
-        log.info(data)
-
         self.game.state = data["state"]
         self.game.actions = data["actions"]
         self.send_json(message)

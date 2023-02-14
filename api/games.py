@@ -26,6 +26,7 @@ class BaseGame:
         self.config = {}
 
     def update_state(self, event):
+        event = event.copy()
         if event['sender'] == self.server.channel_name:
             event['sender'] = self.server.email
         else:

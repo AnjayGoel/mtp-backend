@@ -1,13 +1,10 @@
 import json
+import os
 import random
 import string
 
-import environ
 from google.auth.transport import requests
 from google.oauth2 import id_token
-
-env = environ.Env()
-environ.Env.read_env(".env")
 
 
 def get_user_info(request):
@@ -19,7 +16,7 @@ def get_user_info(request):
         return None
 
     try:
-        return id_token.verify_oauth2_token(token, requests.Request(), env('CLIENT_ID'))
+        return id_token.verify_oauth2_token(token, requests.Request(), os.environ['CLIENT_ID'])
     except Exception as e:
         return None
 
@@ -29,4 +26,4 @@ def random_str():
 
 
 def dumps(data):
-    return json.dumps(data, indent=4, default=lambda __o: str(__o.__dict__))
+    return json.dumps(data, indent=4, default=lambda __o: str(__o.__dict__)) + f"\n{'-' * 10}\n"
