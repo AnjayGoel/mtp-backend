@@ -69,7 +69,7 @@ class Intro(BaseGame):
         self.is_sim = True
         self.game_name = "intro"
         self.game_id = 1
-        self.config = {"timeout": 90, "default": ""}
+        self.config = {"timeout": 120, "default": ""}
 
 
 class Machine(BaseGame):
@@ -78,7 +78,7 @@ class Machine(BaseGame):
         self.is_sim = True
         self.game_name = "machine"
         self.game_id = 2
-        self.config = {"timeout": 90, "default": "d"}
+        self.config = {"timeout": 120, "default": "d"}
 
 
 class PrisonersDilemma(BaseGame):
@@ -87,7 +87,7 @@ class PrisonersDilemma(BaseGame):
         self.is_sim = True
         self.game_name = "prisoners_dilemma"
         self.game_id = 3
-        self.config = {"timeout": 90, "default": "d"}
+        self.config = {"timeout": 120, "default": "d"}
 
 
 class TrustGame(BaseGame):
@@ -96,7 +96,7 @@ class TrustGame(BaseGame):
         self.is_sim = True
         self.game_name = "trust_game"
         self.game_id = 4
-        self.config = {"timeout": 120, "default": 50}
+        self.config = {"timeout": 180, "default": 50}
 
 
 class Outro(BaseGame):
@@ -106,7 +106,7 @@ class Outro(BaseGame):
         self.game_name = "outro"
         self.game_id = 5
         self.info_type = []
-        self.config = {"timeout": 90, "default": {"trust": 5, "know": False}}
+        self.config = {"timeout": 120, "default": {"trust": 5, "know": False}}
 
 
 GAME_MAP = {
