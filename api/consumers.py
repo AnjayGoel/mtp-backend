@@ -118,12 +118,13 @@ class GameConsumer(WebRTCSignalingConsumer):
             "channels": Active.all()
         }))
 
-        async_to_sync(self.channel_layer.group_send)(
-            self.group_id, {
-                "type": "player_disconnect",
-                "sender": self.channel_name
-            }
-        )
+        if self.group_id != "lobby":
+            async_to_sync(self.channel_layer.group_send)(
+                self.group_id, {
+                    "type": "player_disconnect",
+                    "sender": self.channel_name
+                }
+            )
 
         if self.group_id == "lobby":
             self.add_to_group(self.channel_name, None)
