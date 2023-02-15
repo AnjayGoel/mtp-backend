@@ -7,5 +7,7 @@ google-auth
 requests
 channels~=4.0.0
 uvicorn[standard]
+redis
 channels-redis
 attrs
+asgiref~=3.6.0

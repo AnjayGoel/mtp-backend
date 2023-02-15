@@ -6,7 +6,7 @@ from asgiref.sync import async_to_sync
 from channels.generic.websocket import JsonWebsocketConsumer
 import random
 from datetime import datetime
-
+from redis.exceptions import ConnectionError
 from .games import get_game, BaseGame
 from .models import Player, Game
 from .serializers import PlayerSerializer
@@ -172,7 +172,12 @@ class GameConsumer(WebRTCSignalingConsumer):
     def add_to_lobby(self, channel_name, player, prev_group_id):
         if prev_group_id is not None:
             async_to_sync(self.channel_layer.group_discard)(prev_group_id, channel_name)
-        async_to_sync(self.channel_layer.group_add)("lobby", channel_name)
+        try:
+            async_to_sync(self.channel_layer.group_add)("lobby", channel_name)
+        except ConnectionError as e:
+            """Connection getting dropped when idle"""
+            async_to_sync(self.channel_layer.group_add)("lobby", channel_name)
+
         Active.set(channel_name, player)
 
     def add_to_group(self, channel_name, group_id):
