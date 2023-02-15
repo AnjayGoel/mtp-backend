@@ -29,6 +29,7 @@ class C:
     WEB_RTC_MEDIA_ANSWER = "web_rtc_media_answer"
     WEB_RTC_ICE_CANDIDATE = "web_rtc_ice_candidate"
     WEB_RTC_REMOTE_PEER_ICE_CANDIDATE = "remote_peer_ice_candidate"
+    REMOTE_IMAGE_URI = "remote_image_uri"
 
     WRTC_COMMANDS = [
         WEB_RTC_REMOTE_PEER_ICE_CANDIDATE,
@@ -36,7 +37,7 @@ class C:
         WEB_RTC_MEDIA_OFFER,
         WEB_RTC_MEDIA_ANSWER
     ]
-    IGNORE_LOG = WRTC_COMMANDS + []
+    IGNORE_LOG = WRTC_COMMANDS + [REMOTE_IMAGE_URI]
 
 
 COMMANDS_LIST = [v for k, v in dict(vars(C)).items() if "__" not in k]
@@ -151,6 +152,12 @@ class GameConsumer(WebRTCSignalingConsumer):
                 {"type": C.HANDLE_GAME_EVENT, "data": data}
             )
 
+        elif data["type"] == C.REMOTE_IMAGE_URI:
+            async_to_sync(self.channel_layer.send)(
+                self.opponent.channel_name,
+                data
+            )
+
         elif data["type"] in C.WRTC_COMMANDS:
             async_to_sync(self.channel_layer.send)(self.opponent.channel_name, data)
 
@@ -158,6 +165,9 @@ class GameConsumer(WebRTCSignalingConsumer):
             async_to_sync(self.channel_layer.group_send)(
                 self.group_id, data
             )
+
+    def remote_image_uri(self, event):
+        self.send_json(event)
 
     def add_to_lobby(self, channel_name, player, prev_group_id):
         if prev_group_id is not None:
