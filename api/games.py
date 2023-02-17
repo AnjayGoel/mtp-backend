@@ -44,8 +44,7 @@ class BaseGame:
             self.actions.append(event)
 
     def is_complete(self):
-        if len(self.actions) == 2:
-            return True
+        return len(self.actions) == 2
 
     def get_state(self):
         return self.state
@@ -62,6 +61,9 @@ class BaseGame:
         )
         game.save()
 
+    def get_current_scores(self):
+        return [0, 0]
+
 
 class Intro(BaseGame):
     def __init__(self, group_id, server, client, info_type):
@@ -69,7 +71,7 @@ class Intro(BaseGame):
         self.is_sim = True
         self.game_name = "intro"
         self.game_id = 1
-        self.config = {"timeout": 120, "default": ""}
+        self.config = {"timeout": 150, "default": ""}
 
 
 class Machine(BaseGame):
@@ -78,7 +80,27 @@ class Machine(BaseGame):
         self.is_sim = True
         self.game_name = "machine"
         self.game_id = 2
-        self.config = {"timeout": 120, "default": "d"}
+        self.config = {"timeout": 120, "default": "dont"}
+
+    def get_current_scores(self):
+        ss, cs = 0, 0
+
+        s_action = self.state[self.server.email]
+        c_action = self.state[self.client.email]
+
+        if s_action == 'put':
+            ss -= 5
+            cs += 15
+        elif s_action == 'dont':
+            pass
+
+        if c_action == 'put':
+            cs -= 5
+            ss += 15
+        elif c_action == 'dont':
+            pass
+
+        return [ss, cs]
 
 
 class PrisonersDilemma(BaseGame):
@@ -87,7 +109,31 @@ class PrisonersDilemma(BaseGame):
         self.is_sim = True
         self.game_name = "prisoners_dilemma"
         self.game_id = 3
-        self.config = {"timeout": 120, "default": "d"}
+        self.config = {"timeout": 120, "default": "confess"}
+
+    def get_current_scores(self):
+        ss, cs = 0, 0
+
+        s_action = self.state[self.server.email]
+        c_action = self.state[self.client.email]
+
+        if s_action == 'deny' and c_action == 'deny':
+            ss -= 5
+            cs -= 5
+
+        elif s_action == 'deny' and c_action == 'confess':
+            ss -= 20
+            cs += 0
+
+        if s_action == 'confess' and c_action == 'deny':
+            ss += 0
+            cs -= 20
+
+        elif s_action == 'confess' and c_action == 'confess':
+            ss -= 10
+            cs -= 10
+
+        return [ss, cs]
 
 
 class TrustGame(BaseGame):
@@ -96,7 +142,16 @@ class TrustGame(BaseGame):
         self.is_sim = True
         self.game_name = "trust_game"
         self.game_id = 4
-        self.config = {"timeout": 180, "default": 50}
+        self.config = {"timeout": 180, "default": 5}
+
+    def get_current_scores(self):
+        s_action = self.state[self.server.email]
+        c_action = self.state[self.client.email]
+
+        ss = 10 - s_action + c_action
+        cs = 3 * s_action - c_action
+
+        return [ss, cs]
 
 
 class Outro(BaseGame):

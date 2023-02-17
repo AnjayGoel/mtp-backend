@@ -95,6 +95,7 @@ class GameConsumer(WebRTCSignalingConsumer):
         self.opponent: Player = None
         self.game: BaseGame = None
         self.group_id = None
+        self.scores = [0, 0]
 
     def connect(self):
         self.player = self.scope["user"]
@@ -219,8 +220,7 @@ class GameConsumer(WebRTCSignalingConsumer):
 
     def create_group(self):
         if self.channel_name not in Active.all():
-            self.add_to_lobby(self.channel_name, self.player, self.group_id)
-            self.group_id = "lobby"
+            return
 
         lobby_channels = self.find_opponent()
 
@@ -300,7 +300,8 @@ class GameConsumer(WebRTCSignalingConsumer):
                 "info_type": self.game.info_type,
                 "game_id": self.game.game_id,
                 "opponent": PlayerSerializer(self.opponent).data,
-                "config": self.game.config
+                "config": self.game.config,
+                "scores": self.scores
             }
         }
 
@@ -312,6 +313,9 @@ class GameConsumer(WebRTCSignalingConsumer):
 
         self.game.update_state(data)
         data["finished"] = self.game.is_complete()
+        if data['finished']:
+            data['scores'] = self.game.get_current_scores()
+
         data['sender'] = self.player.email if data['sender'] == self.channel_name else self.opponent.email
 
         message = {
@@ -324,6 +328,7 @@ class GameConsumer(WebRTCSignalingConsumer):
         }
 
         async_to_sync(self.channel_layer.group_send)(self.group_id, message)
+
         if self.game.is_complete():
             self.game.save()
             self.init_game(
@@ -340,4 +345,15 @@ class GameConsumer(WebRTCSignalingConsumer):
         data = message["data"]
         self.game.state = data["state"]
         self.game.actions = data["actions"]
+
+        if data['last_event']['finished']:
+            scores = data['last_event']['scores']
+
+            if self.is_server:
+                self.scores[0] += scores[0]
+                self.scores[1] += scores[1]
+            else:
+                self.scores[0] += scores[1]
+                self.scores[1] += scores[0]
+
         self.send_json(message)
