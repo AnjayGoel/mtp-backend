@@ -1,17 +1,19 @@
 import logging
 import pickle
-from typing import Dict, List
-from django.core.cache import cache
-from asgiref.sync import async_to_sync
-from channels.generic.websocket import JsonWebsocketConsumer
 import random
 from datetime import datetime
+from typing import List
+
+from asgiref.sync import async_to_sync
+from channels.generic.websocket import JsonWebsocketConsumer
+from django.conf import settings
+from django.core.cache import cache
 from redis.exceptions import ConnectionError
+
 from .games import get_game, BaseGame
 from .models import Player, Game
 from .serializers import PlayerSerializer
 from .utils import random_str, dumps
-from django.conf import settings
 
 log = logging.getLogger(__name__)
 

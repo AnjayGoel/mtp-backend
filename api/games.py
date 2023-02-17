@@ -1,4 +1,4 @@
-from channels.db import database_sync_to_async
+from typing import List
 
 from api.models import Player, Game
 
@@ -8,7 +8,7 @@ class BaseGame:
     actions = []
     server: Player = None
     client: Player = None
-    info_type: Game.InfoType = None
+    info_type: List[Game.InfoType] = None
     group_id = None
     is_sim = False
     game_name = None
