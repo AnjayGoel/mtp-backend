@@ -5,7 +5,7 @@ import os
 # that Azure automatically creates for us.
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = ['*']
-DEBUG = False
+DEBUG = True
 
 # WhiteNoise configuration
 MIDDLEWARE = [
