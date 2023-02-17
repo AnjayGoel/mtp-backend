@@ -6,6 +6,7 @@ import os
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = ['*']
 DEBUG = True
+# TODO: Fix This
 
 # WhiteNoise configuration
 MIDDLEWARE = [
@@ -30,7 +31,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ['DBNAME'],
-        'HOST':  os.environ['DBHOST'],
+        'HOST': os.environ['DBHOST'],
         'USER': os.environ['DBUSER'],
         'PASSWORD': os.environ['DBPASS']
     }
