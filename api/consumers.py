@@ -212,7 +212,7 @@ class GameConsumer(WebRTCSignalingConsumer):
                     have_played = Game.players_hava_played(self.player.email, other_player.email)
 
                 # TODO: Fix this
-                have_played = False
+                # have_played = False
 
                 if not have_played:
                     return [self.channel_name, channel]
@@ -258,13 +258,16 @@ class GameConsumer(WebRTCSignalingConsumer):
 
     def init_game(self, server: Player, client: Player, group_name, info_type=None, game_id=1):
         if info_type is None:
-            info_type = random.sample([
-                Game.InfoType.INFO,
-                Game.InfoType.VIDEO,
-                Game.InfoType.CHAT
-            ], random.randint(0, 3))
+            if settings.DEBUG:
+                info_type = [Game.InfoType.INFO, Game.InfoType.CHAT, Game.InfoType.VIDEO]
+            else:
+                info_type = random.sample([
+                    Game.InfoType.INFO,
+                    Game.InfoType.VIDEO,
+                    Game.InfoType.CHAT
+                ], random.randint(0, 3))
             # TODO Fix this
-            info_type = [Game.InfoType.INFO, Game.InfoType.CHAT, Game.InfoType.VIDEO]
+            # info_type = [Game.InfoType.INFO, Game.InfoType.CHAT, Game.InfoType.VIDEO]
 
         game = get_game(
             group_id=group_name,

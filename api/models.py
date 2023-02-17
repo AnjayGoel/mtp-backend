@@ -52,7 +52,8 @@ class Game(models.Model):
     def player_has_participated(email):
         server_count = Game.objects.filter(server__email=email, game_name="outro").count()
         client_count = Game.objects.filter(client__email=email, game_name="outro").count()
-        return max(server_count, client_count) == 1
+        print(f'server_count: {server_count}, client_count: {client_count}')
+        return max(server_count, client_count) > 0
 
     @staticmethod
     def players_hava_played(player_one, player_two):
