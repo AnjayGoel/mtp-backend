@@ -83,7 +83,7 @@ class Machine(BaseGame):
         self.config = {"timeout": 120, "default": "dont"}
 
     def get_current_scores(self):
-        ss, cs = 0, 0
+        ss, cs = 5, 5
 
         s_action = self.state[self.server.email]
         c_action = self.state[self.client.email]
@@ -142,13 +142,13 @@ class TrustGame(BaseGame):
         self.is_sim = True
         self.game_name = "trust_game"
         self.game_id = 4
-        self.config = {"timeout": 180, "default": 5}
+        self.config = {"timeout": 180, "default": 2.5}
 
     def get_current_scores(self):
         s_action = self.state[self.server.email]
         c_action = self.state[self.client.email]
 
-        ss = 10 - s_action + c_action
+        ss = 5 - s_action + c_action
         cs = 3 * s_action - c_action
 
         return [ss, cs]
