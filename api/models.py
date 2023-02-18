@@ -13,7 +13,7 @@ class Player(models.Model):
     hall = models.CharField(name="hall", max_length=100)
     year = models.CharField(name="year", max_length=100)
     department = models.CharField(name="department", max_length=100)
-    # upi_id = models.CharField(name="upi_id", max_length=100)
+    upi_id = models.CharField(name="upi_id", max_length=100, null=True)
     channel_name = None
 
     @staticmethod
@@ -52,7 +52,6 @@ class Game(models.Model):
     def player_has_participated(email):
         server_count = Game.objects.filter(server__email=email, game_name="outro").count()
         client_count = Game.objects.filter(client__email=email, game_name="outro").count()
-        print(f'server_count: {server_count}, client_count: {client_count}')
         return max(server_count, client_count) > 0
 
     @staticmethod

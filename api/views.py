@@ -57,7 +57,7 @@ def signup_or_update(request):
             'hall': request.data["hall"],
             'year': request.data["year"],
             'department': request.data["department"],
-            # 'upi_id': request.data["upi_id"]
+            'upi_id': request.data["upi_id"]
         }
     )
 
