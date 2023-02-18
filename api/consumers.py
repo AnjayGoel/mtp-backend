@@ -10,7 +10,7 @@ from django.conf import settings
 from django.core.cache import cache
 from redis.exceptions import ConnectionError
 
-from .games import get_game, BaseGame
+from .games import get_game, BaseGame, GAME_LIST
 from .models import Player, Game
 from .serializers import PlayerSerializer
 from .utils import random_str, dumps
@@ -150,6 +150,7 @@ class GameConsumer(WebRTCSignalingConsumer):
             self.create_group()
 
         elif data["type"] == C.GAME_UPDATE:
+            log.info("HERE" * 10)
             async_to_sync(self.channel_layer.send)(
                 self.game.server.channel_name,
                 {"type": C.HANDLE_GAME_EVENT, "data": data}
@@ -330,6 +331,9 @@ class GameConsumer(WebRTCSignalingConsumer):
             }
         }
 
+        log.info(dumps(message))
+        log.info('************')
+
         async_to_sync(self.channel_layer.group_send)(self.group_id, message)
 
         if self.game.is_complete():
@@ -338,7 +342,7 @@ class GameConsumer(WebRTCSignalingConsumer):
                 server=self.game.server,
                 client=self.game.client,
                 group_name=self.group_id,
-                game_id=(self.game.game_id + 1) % 6,
+                game_id=(self.game.game_id + 1) % len(GAME_LIST),
                 info_type=self.game.info_type
             )
             if self.game.game_name == "outro":
