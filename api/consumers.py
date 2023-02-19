@@ -1,4 +1,5 @@
 import logging
+import os
 import pickle
 import random
 from datetime import datetime
@@ -6,7 +7,6 @@ from typing import List
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import JsonWebsocketConsumer
-from django.conf import settings
 from django.core.cache import cache
 from redis.exceptions import ConnectionError
 
@@ -207,7 +207,7 @@ class GameConsumer(WebRTCSignalingConsumer):
                 if other_player.email == self.player.email:
                     continue
 
-                if settings.DEBUG:
+                if os.environ["ENV"] == "dev":
                     have_played = False
                 else:
                     have_played = Game.players_hava_played(self.player.email, other_player.email)
@@ -259,7 +259,7 @@ class GameConsumer(WebRTCSignalingConsumer):
 
     def init_game(self, server: Player, client: Player, group_name, info_type=None, game_id=1):
         if info_type is None:
-            if settings.DEBUG:
+            if os.environ["ENV"] == "dev":
                 info_type = [Game.InfoType.INFO, Game.InfoType.CHAT, Game.InfoType.VIDEO]
             else:
                 info_type = random.sample([

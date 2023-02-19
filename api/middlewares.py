@@ -1,4 +1,5 @@
 import logging
+import os
 
 from channels.auth import AuthMiddlewareStack
 from channels.db import database_sync_to_async
@@ -28,7 +29,7 @@ class JwtAuthMiddleware(BaseMiddleware):
             logging.info(f"No Player found for {user_info['email']}")
             return None
 
-        if settings.DEBUG:
+        if os.environ['ENV'] == 'dev':
             has_played = False
         else:
             has_played = await database_sync_to_async(Game.player_has_participated)(user_info['email'])
