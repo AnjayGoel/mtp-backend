@@ -81,16 +81,16 @@ class Restaurant(BaseGame):
             cs = 5
 
         elif s_action == 'high' and c_action == 'low':
-            ss = 0
+            ss = -2.5
             cs = 10
 
         if s_action == 'low' and c_action == 'high':
             ss = 10
-            cs = 0
+            cs = -2.5
 
         elif s_action == 'low' and c_action == 'low':
-            ss = 2.5
-            cs = 2.5
+            ss = 0
+            cs = 0
 
         return [ss, cs]
 
