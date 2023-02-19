@@ -35,7 +35,7 @@ class JwtAuthMiddleware(BaseMiddleware):
             has_played = await database_sync_to_async(Game.player_has_participated)(user_info['email'])
 
         if has_played:
-            logging.info(f"Player {user_info['email']} has already player")
+            logging.info(f"Player {user_info['email']} has already played")
             return None
 
         scope["user"] = player
