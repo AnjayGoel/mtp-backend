@@ -111,13 +111,13 @@ class ATM(BaseGame):
 
         if s_action == 'put':
             ss -= 5
-            cs += 15
+            cs += 10
         elif s_action == 'dont':
             pass
 
         if c_action == 'put':
             cs -= 5
-            ss += 15
+            ss += 10
         elif c_action == 'dont':
             pass
 
