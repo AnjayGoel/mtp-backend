@@ -224,11 +224,14 @@ class GameConsumer(WebRTCSignalingConsumer):
         log.info(dumps({
             "event": C.RETRY_MATCHING,
             "channels": Active.all(),
-            "self": self.channel_name
+            "self": self.channel_name,
+            "group": self.group_id
         }))
 
         if self.channel_name not in Active.all():
-            return
+            if self.group_id == "lobby":
+                self.add_to_group(self.channel_name, None)
+                self.add_to_lobby(self.channel_name, self.player, None)
 
         lobby_channels = self.find_opponent()
 
