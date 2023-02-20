@@ -220,6 +220,13 @@ class GameConsumer(WebRTCSignalingConsumer):
         return None
 
     def create_group(self):
+
+        log.info(dumps({
+            "event": C.RETRY_MATCHING,
+            "channels": Active.all(),
+            "self": self.channel_name
+        }))
+
         if self.channel_name not in Active.all():
             return
 
@@ -332,7 +339,6 @@ class GameConsumer(WebRTCSignalingConsumer):
         }
 
         log.info(dumps(message))
-        log.info('************')
 
         async_to_sync(self.channel_layer.group_send)(self.group_id, message)
 

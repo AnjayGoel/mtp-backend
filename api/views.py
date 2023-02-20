@@ -2,7 +2,6 @@ import os
 
 from rest_framework.decorators import api_view, authentication_classes
 from rest_framework.response import Response
-from django.conf import settings
 from api.authentication import GoogleJWTAuthentication
 from api.models import Player, Game
 from api.serializers import PlayerSerializer

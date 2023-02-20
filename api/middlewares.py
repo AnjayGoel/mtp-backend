@@ -4,7 +4,6 @@ import os
 from channels.auth import AuthMiddlewareStack
 from channels.db import database_sync_to_async
 from channels.middleware import BaseMiddleware
-from django.conf import settings
 from django.db import close_old_connections
 
 from api.models import Player, Game
