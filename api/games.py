@@ -82,10 +82,10 @@ class Restaurant(BaseGame):
 
         elif s_action == 'high' and c_action == 'low':
             ss = -2.5
-            cs = 10
+            cs = 7.5
 
         if s_action == 'low' and c_action == 'high':
-            ss = 10
+            ss = 7.5
             cs = -2.5
 
         elif s_action == 'low' and c_action == 'low':
@@ -110,13 +110,13 @@ class ATM(BaseGame):
         c_action = self.state[self.client.email]
 
         if s_action == 'put':
-            ss -= 5
+            ss -= 3
             cs += 10
         elif s_action == 'dont':
             pass
 
         if c_action == 'put':
-            cs -= 5
+            cs -= 3
             ss += 10
         elif c_action == 'dont':
             pass
@@ -143,12 +143,12 @@ class Police(BaseGame):
             cs -= 2.5
 
         elif s_action == 'deny' and c_action == 'confess':
-            ss -= 10
+            ss -= 7.5
             cs += 0
 
         if s_action == 'confess' and c_action == 'deny':
             ss += 0
-            cs -= 10
+            cs -= 7.5
 
         elif s_action == 'confess' and c_action == 'confess':
             ss -= 5
@@ -170,7 +170,7 @@ class Investment(BaseGame):
         c_action = self.state[self.client.email]
 
         ss = 5 - s_action + c_action
-        cs = 3 * s_action - c_action
+        cs = 4 * s_action - c_action
 
         return [ss, cs]
 
