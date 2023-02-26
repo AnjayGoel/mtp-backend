@@ -272,11 +272,11 @@ class GameConsumer(WebRTCSignalingConsumer):
             if os.environ["ENV"] == "dev":
                 info_type = [Game.InfoType.INFO, Game.InfoType.CHAT, Game.InfoType.VIDEO]
             else:
-                info_type = random.sample([
-                    Game.InfoType.INFO,
-                    Game.InfoType.VIDEO,
-                    Game.InfoType.CHAT
-                ], random.randint(0, 3))
+                info_type = []
+                for i in [Game.InfoType.INFO, Game.InfoType.VIDEO, Game.InfoType.CHAT]:
+                    if random.random() >= 0.5:
+                        info_type.append(i)
+
             # TODO Fix this
             # info_type = [Game.InfoType.INFO, Game.InfoType.CHAT, Game.InfoType.VIDEO]
 
