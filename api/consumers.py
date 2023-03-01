@@ -271,7 +271,7 @@ class GameConsumer(WebRTCSignalingConsumer):
         if info_type is None:
             if os.environ["ENV"] == "dev":
                 info_type = [Game.InfoType.INFO, Game.InfoType.CHAT, Game.InfoType.VIDEO]
-            if server.hall == client.hall and server.year == client.year:
+            elif server.hall == client.hall and server.year == client.year:
                 info_type = []
             else:
                 info_type = []
