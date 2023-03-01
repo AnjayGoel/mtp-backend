@@ -273,6 +273,9 @@ class GameConsumer(WebRTCSignalingConsumer):
                 info_type = [Game.InfoType.INFO, Game.InfoType.CHAT, Game.InfoType.VIDEO]
             elif server.hall == client.hall and server.year == client.year:
                 info_type = []
+                if random.random() >= 0.5:
+                    info_type.append(Game.InfoType.CHAT)
+
             elif server.year == client.year and server.department == client.department:
                 info_type = []
                 for i in [Game.InfoType.INFO, Game.InfoType.CHAT]:
