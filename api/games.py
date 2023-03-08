@@ -170,7 +170,7 @@ class Investment(BaseGame):
         c_action = self.state[self.client.email]
 
         ss = 5 - s_action + c_action
-        cs = 4 * s_action - c_action
+        cs = 3 * s_action - c_action
 
         return [ss, cs]
 
