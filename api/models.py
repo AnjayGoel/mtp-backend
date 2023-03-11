@@ -50,6 +50,15 @@ class Game(models.Model):
     actions = models.JSONField(name="actions", default=dict)
 
     @staticmethod
+    def get_prob(x):
+        total = Game.objects.count()
+        if total == 0:
+            return [0.5 for _ in x]
+        else:
+            prob = [1 - Game.objects.filter(info_type__contains=[i]).count() / total for i in x]
+            return prob
+
+    @staticmethod
     def player_has_participated(email):
         server_count = Game.objects.filter(server__email=email, game_name="outro").count()
         client_count = Game.objects.filter(client__email=email, game_name="outro").count()
