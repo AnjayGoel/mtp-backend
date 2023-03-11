@@ -271,24 +271,21 @@ class GameConsumer(WebRTCSignalingConsumer):
         if info_type is None:
             if os.environ["ENV"] == "dev":
                 info_type = [Game.InfoType.INFO, Game.InfoType.CHAT, Game.InfoType.VIDEO]
-            elif server.hall == client.hall and server.year == client.year:
-                info_type = []
-                if random.random() >= 0.5:
-                    info_type.append(Game.InfoType.CHAT)
-
-            elif server.year == client.year and server.department == client.department:
-                info_type = []
-                for i in [Game.InfoType.INFO, Game.InfoType.CHAT]:
-                    if random.random() >= 0.5:
-                        info_type.append(i)
             else:
                 info_type = []
-                for i in [Game.InfoType.INFO, Game.InfoType.VIDEO, Game.InfoType.CHAT]:
+
+                if server.hall == client.hall and server.year == client.year:
+                    support = [Game.InfoType.CHAT]
+                elif server.year == client.year and server.department == client.department:
+                    support = [Game.InfoType.INFO, Game.InfoType.CHAT]
+                elif server.gender == 'F' or client.gender == 'F':
+                    support = [Game.InfoType.INFO, Game.InfoType.CHAT]
+                else:
+                    support = [Game.InfoType.INFO, Game.InfoType.CHAT, Game.InfoType.VIDEO]
+
+                for i in support:
                     if random.random() >= 0.5:
                         info_type.append(i)
-
-            # TODO Fix this
-            # info_type = [Game.InfoType.INFO, Game.InfoType.CHAT, Game.InfoType.VIDEO]
 
         game = get_game(
             group_id=group_name,
