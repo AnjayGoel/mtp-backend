@@ -14,6 +14,7 @@ class Player(models.Model):
     year = models.CharField(name="year", max_length=100)
     department = models.CharField(name="department", max_length=100)
     upi_id = models.CharField(name="upi_id", max_length=100, null=True)
+    gender = models.CharField(name="gender", max_length=100, null=True, default="M")
     channel_name = None
 
     @staticmethod

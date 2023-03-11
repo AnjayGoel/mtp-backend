@@ -6,7 +6,7 @@ from api.models import Player, Game
 class PlayerSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Player
-        fields = ['name', 'email', 'avatar', 'hall', 'year', 'department', 'upi_id']
+        fields = ['name', 'email', 'avatar', 'hall', 'year', 'department', 'upi_id', 'gender']
 
 
 class GameSerializer(serializers.HyperlinkedModelSerializer):
