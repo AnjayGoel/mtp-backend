@@ -56,7 +56,7 @@ class BaseGame:
 class Intro(BaseGame):
     game_id = 1
     game_name = "intro"
-    config = {"timeout": 150, "default": ""}
+    config = {"timeout": 180, "default": ""}
 
     def __init__(self, group_id, server, client, info_type):
         super(Intro, self).__init__(group_id, server, client, info_type)
@@ -65,7 +65,7 @@ class Intro(BaseGame):
 class Restaurant(BaseGame):
     game_id = 2
     game_name = "restaurant"
-    config = {"timeout": 120, "default": "low"}
+    config = {"timeout": 180, "default": "low"}
 
     def __init__(self, group_id, server, client, info_type):
         super(Restaurant, self).__init__(group_id, server, client, info_type)
@@ -98,7 +98,7 @@ class Restaurant(BaseGame):
 class ATM(BaseGame):
     game_id = 3
     game_name = "atm"
-    config = {"timeout": 120, "default": "dont"}
+    config = {"timeout": 180, "default": "dont"}
 
     def __init__(self, group_id, server, client, info_type):
         super(ATM, self).__init__(group_id, server, client, info_type)
@@ -127,7 +127,7 @@ class ATM(BaseGame):
 class Police(BaseGame):
     game_id = 4
     game_name = "police"
-    config = {"timeout": 120, "default": "confess"}
+    config = {"timeout": 180, "default": "confess"}
 
     def __init__(self, group_id, server, client, info_type):
         super(Police, self).__init__(group_id, server, client, info_type)
@@ -160,7 +160,7 @@ class Police(BaseGame):
 class Investment(BaseGame):
     game_name = "investment"
     game_id = 5
-    config = {"timeout": 180, "default": 2.5}
+    config = {"timeout": 240, "default": 2.5}
 
     def __init__(self, group_id, server, client, info_type):
         super(Investment, self).__init__(group_id, server, client, info_type)
@@ -178,7 +178,7 @@ class Investment(BaseGame):
 class Outro(BaseGame):
     game_id = 6
     game_name = "outro"
-    config = {"timeout": 120, "default": {"trust": 5, "know": False}}
+    config = {"timeout": 180, "default": {"trust": 5, "know": False}}
 
     def __init__(self, group_id, server, client, info_type):
         super(Outro, self).__init__(group_id, server, client, info_type)

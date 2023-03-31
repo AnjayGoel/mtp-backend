@@ -59,7 +59,8 @@ def signup_or_update(request):
             'year': request.data["year"],
             'department': request.data["department"],
             'upi_id': request.data["upi_id"],
-            'gender': request.data["gender"]
+            'gender': request.data["gender"],
+            'roll_no': request.data['roll_no']
         }
     )
 

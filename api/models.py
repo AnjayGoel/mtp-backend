@@ -13,6 +13,7 @@ class Player(models.Model):
     hall = models.CharField(name="hall", max_length=100)
     year = models.CharField(name="year", max_length=100)
     department = models.CharField(name="department", max_length=100)
+    roll_no = models.CharField(name="roll_no", max_length=100, default="")
     upi_id = models.CharField(name="upi_id", max_length=100, null=True)
     gender = models.CharField(name="gender", max_length=100, null=True, default="M")
     channel_name = None
