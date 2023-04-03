@@ -1,4 +1,4 @@
-#MTP-Backend
+# MTP-Backend
 Backend for my MTP on behavioral game theory
 
 ### Azure App Config
