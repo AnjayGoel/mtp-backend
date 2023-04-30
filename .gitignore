@@ -2,3 +2,4 @@
 .env
 /run.sh
 analysis
+__pycache__
