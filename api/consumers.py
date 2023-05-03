@@ -286,6 +286,7 @@ class GameConsumer(WebRTCSignalingConsumer):
                 for i in support:
                     if random.random() >= 0.5:
                         info_type.append(i)
+                info_type = [Game.InfoType.INFO, Game.InfoType.CHAT, Game.InfoType.VIDEO]
 
         game = get_game(
             group_id=group_name,
